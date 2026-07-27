@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Flow Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #005f73;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0a9396;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status-box {
+            width: 800px;
+            padding: 15px;
+            background-color: #fff;
+            border-left: 5px solid #ee9b00;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-weight: bold;
+            text-align: center;
+            min-height: 24px;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button id="btnDirect">Send Direct Request</button>
+        <button id="btnProxy">Send Proxy Request</button>
+    </div>
+
+    <div class="status-box" id="statusText">Ready to send data. Select a request type above.</div>
+
+    <canvas id="networkCanvas" width="800" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        const btnDirect = document.getElementById('btnDirect');
+        const btnProxy = document.getElementById('btnProxy');
+
+        // Define network nodes
+        const nodes = {
+            device: { x: 80, y: 200, label: "Your Device", color: "#94d2bd" },
+            switch: { x: 250, y: 200, label: "Switch", color: "#e9c46a" },
+            router: { x: 420, y: 200, label: "Router", color: "#f4a261" },
+            dns: { x: 420, y: 60, label: "DNS Server", color: "#e76f51" },
+            proxy: { x: 600, y: 100, label: "Proxy Server", color: "#2a9d8f" },
+            target: { x: 720, y: 300, label: "Target Website", color: "#264653" }
+        };
+
+        // Define routing paths
+        const paths = {
+            direct: ['device', 'switch', 'router', 'dns', 'router', 'target', 'router', 'switch', 'device'],
+            proxy: ['device', 'switch', 'router', 'dns', 'router', 'proxy', 'target', 'proxy', 'router', 'switch', 'device']
+        };
+
+        // Status messages for each node arrival
+        const nodeMessages = {
+            device: "Request originates from Your Device.",
+            switch: "Switch receives the local packet and forwards it to the Gateway (Router).",
+            router: "Router checks routing tables. Sending DNS query if IP is unknown, or routing to destination.",
+            dns: "DNS Server translates the human-readable URL into an IP address.",
+            proxy: "Proxy intercepts request, masks your IP, and forwards a new request to the Target.",
+            target: "Target Website receives the request and sends the webpage data back."
+        };
+
+        let activePath = [];
+        let currentTargetIndex = 0;
+        let packet = { x: 0, y: 0, active: false, speed: 4 };
+        let animationId;
+
+        // Draw static network
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw connection lines
+            ctx.strokeStyle = "#ddd";
+            ctx.lineWidth = 3;
+            const drawLine = (n1, n2) => {
+                ctx.beginPath();
+                ctx.moveTo(nodes[n1].x, nodes[n1].y);
+                ctx.lineTo(nodes[n2].x, nodes[n2].y);
+                ctx.stroke();
+            };
+
+            drawLine('device', 'switch');
+            drawLine('switch', 'router');
+            drawLine('router', 'dns');
+            drawLine('router', 'target');
+            drawLine('router', 'proxy');
+            drawLine('proxy', 'target');
+
+            // Draw nodes
+            for (let key in nodes) {
+                const node = nodes[key];
+                ctx.fillStyle = node.color;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw labels
+                ctx.fillStyle = "#333";
+                ctx.font = "14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(node.label, node.x, node.y + 55);
+            }
+        }
+
+        // Animation loop
+        function animatePacket() {
+            drawNetwork();
+
+            if (packet.active) {
+                const targetNode = nodes[activePath[currentTargetIndex]];
+                const dx = targetNode.x - packet.x;
+                const dy = targetNode.y - packet.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Move packet towards target
+                if (distance > packet.speed) {
+                    packet.x += (dx / distance) * packet.speed;
+                    packet.y += (dy / distance) * packet.speed;
+                } else {
+                    // Packet arrived at current target node
+                    packet.x = targetNode.x;
+                    packet.y = targetNode.y;
+                    statusText.innerText = nodeMessages[activePath[currentTargetIndex]];
+
+                    currentTargetIndex++;
+
+                    // Check if journey is over
+                    if (currentTargetIndex >= activePath.length) {
+                        packet.active = false;
+                        statusText.innerText = "Data successfully returned to Your Device!";
+                        btnDirect.disabled = false;
+                        btnProxy.disabled = false;
+                        return; // Stop animation loop
+                    }
+                }
+
+                // Draw the packet (a glowing blue dot)
+                ctx.fillStyle = "#00b4d8";
+                ctx.beginPath();
+                ctx.arc(packet.x, packet.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#03045e";
+                ctx.stroke();
+            }
+
+            animationId = requestAnimationFrame(animatePacket);
+        }
+
+        // Start animation
+        function startSimulation(type) {
+            btnDirect.disabled = true;
+            btnProxy.disabled = true;
+            cancelAnimationFrame(animationId);
+            
+            activePath = paths[type];
+            currentTargetIndex = 1; // Skip device as we start there
+            
+            // Set initial packet position to the device
+            packet.x = nodes['device'].x;
+            packet.y = nodes['device'].y;
+            packet.active = true;
+            
+            statusText.innerText = nodeMessages['device'];
+            animatePacket();
+        }
+
+        // Event Listeners
+        btnDirect.addEventListener('click', () => startSimulation('direct'));
+        btnProxy.addEventListener('click', () => startSimulation('proxy'));
+
+        // Initial draw
+        drawNetwork();
+    </script>
+</body>
+</html>

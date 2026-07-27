@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mobile LaTeX to Image</title>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'local' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      width: 100%;
+      padding: 20px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    h1 { font-size: 1.3rem; margin-bottom: 8px; text-align: center; }
+    p.subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; text-align: center; }
+
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: #cbd5e1; }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      background-color: #0f172a;
+      color: #38bdf8;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px; /* Prevents auto-zoom on mobile [cite: 24] */
+      font-family: monospace;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+
+    /* Color Picker Styles */
+    .color-picker {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      justify-content: flex-start;
+    }
+
+    .color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .color-swatch.active {
+      transform: scale(1.15);
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    /* Live Preview Box */
+    .preview-box {
+      background-color: #ffffff;
+      color: #000000; /* Default text color */
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      transition: color 0.3s ease;
+    }
+
+    /* Mobile Button Styles */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--accent);
+      color: white;
+    }
+
+    button.success { background-color: var(--success); }
+    
+    #share-btn {
+      background-color: #475569;
+      display: none; 
+    }
+
+    /* Native Output Image for Long-Press */
+    .output-section {
+      margin-top: 24px;
+      display: none; 
+      text-align: center;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .output-section p {
+      color: var(--success);
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #final-image {
+      max-width: 100%;
+      border-radius: 4px;
+      border: 2px dashed #64748b;
+      /* Visual checkerboard so user sees it is transparent [cite: 22, 23] */
+      background-image: 
+        linear-gradient(45deg, #cbd5e1 25%, transparent 25%), 
+        linear-gradient(-45deg, #cbd5e1 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #cbd5e1 75%), 
+        linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: white;
+    }
+
+    #export-canvas { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>LaTeX Image Generator</h1>
+    <p class="subtitle">Mobile-optimized for Android</p>
+
+    <label for="latex-input">LaTeX Code:</label>
+    <textarea id="latex-input">x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</textarea>
+
+    <label>Equation Color:</label>
+    <div class="color-picker" id="color-picker">
+      <div class="color-swatch active" data-color="#000000" style="background-color: #000000;"></div>
+      <div class="color-swatch" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
+      <div class="color-swatch" data-color="#ef4444" style="background-color: #ef4444;"></div>
+      <div class="color-swatch" data-color="#10b981" style="background-color: #10b981;"></div>
+      <div class="color-swatch" data-color="#8b5cf6" style="background-color: #8b5cf6;"></div>
+    </div>
+
+    <label>Live Preview:</label>
+    <div class="preview-box" id="preview-container"></div>
+
+    <div class="button-group">
+      <button id="generate-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect></svg>
+        <span>Generate & Copy Image</span>
+      </button>
+
+      <button id="share-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        <span>Share via App...</span>
+      </button>
+    </div>
+
+    <div class="output-section" id="output-section">
+      <p>↓ Long-press image below to copy/save ↓</p>
+      <img id="final-image" alt="Rendered transparent equation">
+    </div>
+  </div>
+
+  <canvas id="export-canvas"></canvas>
+
+  <script>
+    const latexInput = document.getElementById('latex-input');
+    const previewContainer = document.getElementById('preview-container');
+    const generateBtn = document.getElementById('generate-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const outputSection = document.getElementById('output-section');
+    const finalImage = document.getElementById('final-image');
+    const canvas = document.getElementById('export-canvas');
+    const ctx = canvas.getContext('2d');
+    const swatches = document.querySelectorAll('.color-swatch');
+
+    // Default State
+    let selectedColor = '#000000';
+
+    // Handle Color Selection
+    swatches.forEach(swatch => {
+      swatch.addEventListener('click', () => {
+        // Update UI
+        swatches.forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+        
+        // Update Color State
+        selectedColor = swatch.getAttribute('data-color');
+        
+        // Apply to live preview container (MathJax inherits this via currentColor)
+        previewContainer.style.color = selectedColor;
+        
+        // Hide previous exports until re-generated
+        outputSection.style.display = 'none';
+        shareBtn.style.display = 'none';
+      });
+    });
+
+    // Render MathJax Preview
+    let timeout = null;
+    function renderMath() {
+      const texCode = latexInput.value.trim();
+      previewContainer.innerHTML = '';
+      if (!texCode) return;
+
+      MathJax.tex2svgPromise(texCode, { display: true }).then((node) => {
+        const svg = node.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('width', '100%');
+          svg.style.maxHeight = '150px';
+          previewContainer.appendChild(svg);
+        }
+      });
+    }
+
+    latexInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(renderMath, 300);
+      outputSection.style.display = 'none'; 
+      shareBtn.style.display = 'none';
+    });
+
+    window.addEventListener('load', () => setTimeout(renderMath, 500));
+
+    // Generate PNG and handle Mobile logic
+    generateBtn.addEventListener('click', async () => {
+      const svgElement = previewContainer.querySelector('svg');
+      if (!svgElement) return;
+
+      const clonedSvg = svgElement.cloneNode(true);
+      const box = svgElement.getBoundingClientRect();
+      const scaleFactor = 3; 
+      const width = (box.width || 300) * scaleFactor;
+      const height = (box.height || 100) * scaleFactor;
+
+      clonedSvg.setAttribute('width', width);
+      clonedSvg.setAttribute('height', height);
+
+      let svgString = new XMLSerializer().serializeToString(clonedSvg);
+      
+      // CRITICAL FIX FOR CANVAS EXPORT: 
+      // MathJax sets SVG fill to "currentColor". When drawn to a disconnected canvas, this defaults to black.
+      // We must explicitly find and replace "currentColor" with our selected hex code before converting to an image.
+      svgString = svgString.replace(/"currentColor"/g, `"${selectedColor}"`);
+
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const URL = window.URL || window.webkitURL || window;
+      const blobURL = URL.createObjectURL(svgBlob);
+
+      const image = new Image();
+      image.onload = () => {
+        canvas.width = width;
+        canvas.height = height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(image, 0, 0);
+
+        canvas.toBlob(async (blob) => {
+          // 1. Generate native image for Android Long-Press 
+          const pngUrl = URL.createObjectURL(blob);
+          finalImage.src = pngUrl;
+          outputSection.style.display = 'block'; 
+
+          // 2. Setup Native Android Web Share [cite: 17, 18, 20]
+          if (navigator.share && navigator.canShare) {
+            const file = new File([blob], "equation.png", { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              shareBtn.style.display = 'flex';
+              shareBtn.onclick = async () => {
+                try {
+                  await navigator.share({
+                    files: [file],
+                    title: 'Equation',
+                    text: 'Rendered LaTeX equation'
+                  });
+                } catch (err) { console.log('Share canceled', err); }
+              };
+            }
+          }
+
+          // 3. Attempt standard Clipboard copy [cite: 13]
+          try {
+            const data = [new ClipboardItem({ 'image/png': blob })];
+            await navigator.clipboard.write(data);
+            
+            const btnSpan = generateBtn.querySelector('span');
+            generateBtn.classList.add('success');
+            btnSpan.textContent = 'Copied to Clipboard! ✓';
+            setTimeout(() => {
+              generateBtn.classList.remove('success');
+              btnSpan.textContent = 'Generate & Copy Image';
+            }, 2500);
+
+          } catch (err) {
+            console.log("Direct clipboard API blocked by mobile browser. Defaulting to long-press.");
+          }
+        }, 'image/png');
+      };
+      image.src = blobURL;
+    });
+  </script>
+</body>
+</html>

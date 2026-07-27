@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inflation Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #f8fafc;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-size: 16px;
+      color: #111827;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    }
+
+    .input-row {
+      position: relative;
+    }
+
+    .input-row .prefix,
+    .input-row .suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7280;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .input-row .prefix { left: 14px; }
+    .input-row .suffix { right: 14px; }
+
+    .input-row.amount input { padding-left: 34px; }
+    .input-row.rate input { padding-right: 38px; }
+
+    .years-row {
+      display: grid;
+      grid-template-columns: 1fr 76px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      accent-color: #2563eb;
+      padding: 0;
+      border: none;
+    }
+
+    .years-value {
+      text-align: center;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 12px 10px;
+      font-weight: 800;
+      color: #111827;
+      background: #f9fafb;
+    }
+
+    .quick-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    .result {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    .result-label {
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .result-value {
+      font-size: clamp(32px, 6vw, 50px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-weight: 900;
+      color: #111827;
+      margin-bottom: 12px;
+      word-break: break-word;
+    }
+
+    .result-text {
+      color: #4b5563;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .formula {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; align-items: flex-start; }
+      .container { padding: 22px; border-radius: 18px; }
+      .grid, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Inflation Calculator</h1>
+      <p class="subtitle">Calculate future value or today’s purchasing power using a simple inflation estimate.</p>
+    </header>
+
+    <section class="grid">
+      <div class="field full">
+        <label for="mode">Calculation type</label>
+        <select id="mode">
+          <option value="futureToToday">Future money → Today's value</option>
+          <option value="todayToFuture">Today's money → Future equivalent</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="amount">Amount</label>
+        <div class="input-row amount">
+          <span class="prefix">₹</span>
+          <input id="amount" type="number" value="10000000" min="0" step="10000" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="inflation">Inflation rate</label>
+        <div class="input-row rate">
+          <input id="inflation" type="number" value="4.58" min="0" step="0.01" />
+          <span class="suffix">%</span>
+        </div>
+      </div>
+
+      <div class="field full">
+        <label for="years">Years</label>
+        <div class="years-row">
+          <input id="years" type="range" min="1" max="50" value="20" />
+          <div class="years-value"><span id="yearsValue">20</span> yrs</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="quick-buttons">
+      <button data-amount="100000">₹1L</button>
+      <button data-amount="1000000">₹10L</button>
+      <button data-amount="5000000">₹50L</button>
+      <button data-amount="10000000">₹1Cr</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <section class="result">
+      <div class="result-label" id="resultLabel">Today's purchasing power</div>
+      <div class="result-value" id="resultValue">₹0</div>
+      <p class="result-text" id="resultText"></p>
+    </section>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-label">Multiplier</div>
+        <div class="stat-value" id="multiplier">0×</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Power left</div>
+        <div class="stat-value" id="powerLeft">0%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Value erosion</div>
+        <div class="stat-value" id="erosion">0%</div>
+      </div>
+    </section>
+
+    <p class="formula">
+      <strong>Formula:</strong>
+      <br> Future equivalent = Amount × (1 + inflation)<sup>years</sup>. 
+      <br> Today's value = Amount ÷ (1 + inflation)<sup>years</sup>.
+    </p>
+  </main>
+
+  <script>
+    const amountInput = document.getElementById('amount');
+    const inflationInput = document.getElementById('inflation');
+    const yearsInput = document.getElementById('years');
+    const modeInput = document.getElementById('mode');
+    const yearsValue = document.getElementById('yearsValue');
+
+    const resultLabel = document.getElementById('resultLabel');
+    const resultValue = document.getElementById('resultValue');
+    const resultText = document.getElementById('resultText');
+    const multiplierEl = document.getElementById('multiplier');
+    const powerLeftEl = document.getElementById('powerLeft');
+    const erosionEl = document.getElementById('erosion');
+
+    function formatINR(value) {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      }).format(value || 0);
+    }
+
+    function compactINR(value) {
+      const abs = Math.abs(value);
+      if (abs >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
+      if (abs >= 100000) return `₹${(value / 100000).toFixed(2)} L`;
+      return formatINR(value);
+    }
+
+    function calculate() {
+      const amount = Number(amountInput.value) || 0;
+      const rate = (Number(inflationInput.value) || 0) / 100;
+      const years = Number(yearsInput.value) || 0;
+      const multiplier = Math.pow(1 + rate, years);
+      const futureValue = amount * multiplier;
+      const todayValue = amount / multiplier;
+      const powerLeft = (1 / multiplier) * 100;
+      const erosion = 100 - powerLeft;
+
+      yearsValue.textContent = years;
+      multiplierEl.textContent = `${multiplier.toFixed(2)}×`;
+      powerLeftEl.textContent = `${powerLeft.toFixed(1)}%`;
+      erosionEl.textContent = `${erosion.toFixed(1)}%`;
+
+      if (modeInput.value === 'todayToFuture') {
+        resultLabel.textContent = 'Future equivalent value';
+        resultValue.textContent = compactINR(futureValue);
+        resultText.textContent = `${formatINR(amount)} today would need about ${formatINR(futureValue)} after ${years} years to keep the same purchasing power.`;
+      } else {
+        resultLabel.textContent = "Today's purchasing power";
+        resultValue.textContent = compactINR(todayValue);
+        resultText.textContent = `${formatINR(amount)} after ${years} years would feel like about ${formatINR(todayValue)} in today's money.`;
+      }
+    }
+
+    [amountInput, inflationInput, yearsInput, modeInput].forEach(input => {
+      input.addEventListener('input', calculate);
+      input.addEventListener('change', calculate);
+    });
+
+    document.querySelectorAll('[data-amount]').forEach(button => {
+      button.addEventListener('click', () => {
+        amountInput.value = button.dataset.amount;
+        calculate();
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      amountInput.value = 10000000;
+      inflationInput.value = 4.58;
+      yearsInput.value = 20;
+      modeInput.value = 'futureToToday';
+      calculate();
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
