@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mobile LaTeX to Image</title>
   
   <script>
@@ -87,6 +87,12 @@
       border-color: #ffffff;
       box-shadow: 0 0 0 2px var(--accent);
     }
+
+    .color-swatch.black { background-color: #000000; }
+    .color-swatch.blue { background-color: #3b82f6; }
+    .color-swatch.red { background-color: #ef4444; }
+    .color-swatch.green { background-color: #10b981; }
+    .color-swatch.purple { background-color: #8b5cf6; }
 
     /* Live Preview Box */
     .preview-box {
@@ -178,11 +184,11 @@
 
     <label>Equation Color:</label>
     <div class="color-picker" id="color-picker">
-      <div class="color-swatch active" data-color="#000000" style="background-color: #000000;"></div>
-      <div class="color-swatch" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
-      <div class="color-swatch" data-color="#ef4444" style="background-color: #ef4444;"></div>
-      <div class="color-swatch" data-color="#10b981" style="background-color: #10b981;"></div>
-      <div class="color-swatch" data-color="#8b5cf6" style="background-color: #8b5cf6;"></div>
+      <div class="color-swatch black active" data-color="#000000"></div>
+      <div class="color-swatch blue" data-color="#3b82f6"></div>
+      <div class="color-swatch red" data-color="#ef4444"></div>
+      <div class="color-swatch green" data-color="#10b981"></div>
+      <div class="color-swatch purple" data-color="#8b5cf6"></div>
     </div>
 
     <label>Live Preview:</label>
