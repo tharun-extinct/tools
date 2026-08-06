@@ -75,6 +75,10 @@
             margin-bottom: 25px;
         }
 
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
         .input-header {
             display: flex;
             justify-content: space-between;
@@ -148,6 +152,40 @@
             background: white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
             border: 2px solid var(--primary);
+        }
+
+        input:disabled {
+            cursor: not-allowed;
+        }
+
+        .input-group.disabled {
+            opacity: 0.5;
+        }
+
+        .control-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #f6faf8;
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .control-note::before {
+            content: "i";
+            flex: 0 0 16px;
+            height: 16px;
+            border: 1px solid var(--primary);
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 15px;
+            text-align: center;
         }
 
         .donut-chart-container {
@@ -238,12 +276,19 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 20px 12px;
+            }
             .calculator-container {
                 flex-direction: column;
             }
             .input-section {
                 border-right: none;
                 border-bottom: 1px solid var(--border);
+            }
+            .input-section,
+            .result-section {
+                padding: 28px 24px;
             }
         }
     </style>
@@ -318,6 +363,17 @@
             </div>
             <input type="range" id="stepUpRange" value="10" min="0" max="50" step="1" title="Annual Step Up range">
         </div>
+
+        <div class="input-group" id="stepUpStopGroup">
+            <div class="input-header">
+                <label for="stepUpStopYear">Stop step-up after</label>
+                <div class="input-wrapper">
+                    <input type="number" id="stepUpStopYear" value="5" min="1" max="10" title="Stop step-up after this year">
+                    <span>Yr</span>
+                </div>
+            </div>
+            <div class="control-note" id="stepUpStopNote">Your SIP increases for 5 years, then stays fixed from year 6.</div>
+        </div>
     </div>
 
     <!-- Result Section -->
@@ -372,6 +428,9 @@
         timePeriodRange: document.getElementById('timePeriodRange'),
         stepUp: document.getElementById('stepUp'),
         stepUpRange: document.getElementById('stepUpRange'),
+        stepUpStopYear: document.getElementById('stepUpStopYear'),
+        stepUpStopGroup: document.getElementById('stepUpStopGroup'),
+        stepUpStopNote: document.getElementById('stepUpStopNote'),
         
         displayInvested: document.getElementById('displayInvested'),
         displayReturns: document.getElementById('displayReturns'),
@@ -395,14 +454,35 @@
     syncInputs('returnRate', 'returnRateRange');
     syncInputs('timePeriod', 'timePeriodRange');
     syncInputs('stepUp', 'stepUpRange');
+    elements.stepUpStopYear.addEventListener('input', calculate);
     elements.sipFrequency.addEventListener('change', calculate);
 
     function calculate() {
         const amount = parseFloat(elements.sipAmount.value) || 0;
         const freq = parseInt(elements.sipFrequency.value) || 12;
         const rateParam = parseFloat(elements.returnRate.value) || 0;
-        const years = parseFloat(elements.timePeriod.value) || 0;
+        const years = parseInt(elements.timePeriod.value) || 0;
         const stepUpRate = parseFloat(elements.stepUp.value) || 0;
+        const requestedStopYear = parseInt(elements.stepUpStopYear.value) || 1;
+        const stepUpStopYear = Math.min(Math.max(requestedStopYear, 1), years || 1);
+
+        // Keep the stopping-year control within the selected investment tenure.
+        elements.stepUpStopYear.max = years || 1;
+        if (requestedStopYear !== stepUpStopYear) {
+            elements.stepUpStopYear.value = stepUpStopYear;
+        }
+
+        const stepUpEnabled = stepUpRate > 0;
+        elements.stepUpStopYear.disabled = !stepUpEnabled;
+        elements.stepUpStopGroup.classList.toggle('disabled', !stepUpEnabled);
+
+        if (!stepUpEnabled) {
+            elements.stepUpStopNote.textContent = 'Set an annual step-up above 0% to choose when it stops.';
+        } else if (stepUpStopYear >= years) {
+            elements.stepUpStopNote.textContent = 'The step-up continues throughout your full investment tenure.';
+        } else {
+            elements.stepUpStopNote.textContent = `Your SIP increases for ${stepUpStopYear} ${stepUpStopYear === 1 ? 'year' : 'years'}, then stays fixed from year ${stepUpStopYear + 1}.`;
+        }
 
         let totalInvested = 0;
         let futureValue = 0;
@@ -417,8 +497,10 @@
                 futureValue = futureValue * (1 + periodicRate) + currentSipAmount;
                 totalInvested += currentSipAmount;
             }
-            // Apply annual step-up to the SIP amount for next year
-            currentSipAmount = currentSipAmount * (1 + (stepUpRate / 100));
+            // Apply step-up only until the selected stopping year. The SIP then remains fixed.
+            if (y <= stepUpStopYear) {
+                currentSipAmount = currentSipAmount * (1 + (stepUpRate / 100));
+            }
         }
 
         const estReturns = futureValue - totalInvested;
