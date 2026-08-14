@@ -71,6 +71,14 @@
             border-bottom: 2px solid var(--primary);
         }
 
+        .calculator-section {
+            display: none;
+        }
+
+        .calculator-section.active {
+            display: block;
+        }
+
         .input-group {
             margin-bottom: 25px;
         }
@@ -348,10 +356,12 @@
     <!-- Input Section -->
     <div class="input-section">
         <div class="header-tabs">
-            <div class="tab active">Step Up SIP</div>
-            <div class="tab">Lumpsum</div>
+            <div class="tab active" data-calculator="sip">Step Up SIP</div>
+            <div class="tab" data-calculator="lumpsum">Lumpsum</div>
         </div>
 
+        <!-- Step Up SIP Calculator Section -->
+        <div class="calculator-section active" id="sipSection">
         <div class="input-group">
             <div class="input-header">
                 <label>SIP Amount</label>
@@ -428,6 +438,43 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- Lumpsum Calculator Section -->
+        <div class="calculator-section" id="lumpsumSection">
+        <div class="input-group">
+            <div class="input-header">
+                <label>Lumpsum Amount</label>
+                <div class="input-wrapper">
+                    <span>₹</span>
+                    <input type="number" id="lumpsumAmount" value="500000" min="500" max="10000000" title="Lumpsum Amount">
+                </div>
+            </div>
+            <input type="range" id="lumpsumAmountRange" value="500000" min="500" max="5000000" step="5000" title="Lumpsum Amount Range">
+        </div>
+
+        <div class="input-group">
+            <div class="input-header">
+                <label>Expected return rate (p.a)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="lumpsumReturnRate" value="12" min="1" max="30" step="0.1" title="Expected return rate">
+                    <span>%</span>
+                </div>
+            </div>
+            <input type="range" id="lumpsumReturnRateRange" value="12" min="1" max="30" step="0.1" title="Expected return rate range">
+        </div>
+
+        <div class="input-group">
+            <div class="input-header">
+                <label>Time period</label>
+                <div class="input-wrapper">
+                    <input type="number" id="lumpsumTimePeriod" value="10" min="1" max="40" title="Time period in years">
+                    <span>Yr</span>
+                </div>
+            </div>
+            <input type="range" id="lumpsumTimePeriodRange" value="10" min="1" max="40" step="1" title="Time period range">
+        </div>
+        </div>
     </div>
 
     <!-- Result Section -->
@@ -471,8 +518,12 @@
         }).format(amount);
     };
 
+    // Current calculator mode
+    let currentCalculator = 'sip';
+
     // Elements
     const elements = {
+        // SIP Elements
         sipAmount: document.getElementById('sipAmount'),
         sipAmountRange: document.getElementById('sipAmountRange'),
         sipFrequency: document.getElementById('sipFrequency'),
@@ -486,11 +537,50 @@
         stepUpStopGroup: document.getElementById('stepUpStopGroup'),
         stepUpStopNote: document.getElementById('stepUpStopNote'),
         
+        // Lumpsum Elements
+        lumpsumAmount: document.getElementById('lumpsumAmount'),
+        lumpsumAmountRange: document.getElementById('lumpsumAmountRange'),
+        lumpsumReturnRate: document.getElementById('lumpsumReturnRate'),
+        lumpsumReturnRateRange: document.getElementById('lumpsumReturnRateRange'),
+        lumpsumTimePeriod: document.getElementById('lumpsumTimePeriod'),
+        lumpsumTimePeriodRange: document.getElementById('lumpsumTimePeriodRange'),
+        
+        // Result Elements
         displayInvested: document.getElementById('displayInvested'),
         displayReturns: document.getElementById('displayReturns'),
         displayTotal: document.getElementById('displayTotal'),
-        chart: document.getElementById('chart')
+        chart: document.getElementById('chart'),
+        
+        // Tab Elements
+        sipSection: document.getElementById('sipSection'),
+        lumpsumSection: document.getElementById('lumpsumSection'),
+        tabs: document.querySelectorAll('.tab')
     };
+
+    // Tab switching
+    elements.tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const calculatorType = e.target.getAttribute('data-calculator');
+            
+            // Update active tab
+            elements.tabs.forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Show/hide sections
+            elements.sipSection.classList.remove('active');
+            elements.lumpsumSection.classList.remove('active');
+            
+            if (calculatorType === 'sip') {
+                elements.sipSection.classList.add('active');
+                currentCalculator = 'sip';
+            } else {
+                elements.lumpsumSection.classList.add('active');
+                currentCalculator = 'lumpsum';
+            }
+            
+            calculate();
+        });
+    });
 
     // Sync input and range slider
     const syncInputs = (textId, rangeId) => {
@@ -510,8 +600,21 @@
     syncInputs('stepUp', 'stepUpRange');
     elements.stepUpStopYear.addEventListener('input', calculate);
     elements.sipFrequency.addEventListener('change', calculate);
+    
+    // Lumpsum Calculator syncs
+    syncInputs('lumpsumAmount', 'lumpsumAmountRange');
+    syncInputs('lumpsumReturnRate', 'lumpsumReturnRateRange');
+    syncInputs('lumpsumTimePeriod', 'lumpsumTimePeriodRange');
 
     function calculate() {
+        if (currentCalculator === 'sip') {
+            calculateSIP();
+        } else {
+            calculateLumpsum();
+        }
+    }
+
+    function calculateSIP() {
         const amount = parseFloat(elements.sipAmount.value) || 0;
         const freq = parseInt(elements.sipFrequency.value) || 12;
         const rateParam = parseFloat(elements.returnRate.value) || 0;
@@ -558,7 +661,23 @@
         }
 
         const estReturns = futureValue - totalInvested;
+        updateResults(totalInvested, estReturns, futureValue);
+    }
 
+    function calculateLumpsum() {
+        const principal = parseFloat(elements.lumpsumAmount.value) || 0;
+        const rateParam = parseFloat(elements.lumpsumReturnRate.value) || 0;
+        const years = parseInt(elements.lumpsumTimePeriod.value) || 0;
+        
+        // Compound Interest Formula: A = P(1 + r/100)^n
+        const rate = rateParam / 100;
+        const futureValue = principal * Math.pow(1 + rate, years);
+        const estReturns = futureValue - principal;
+        
+        updateResults(principal, estReturns, futureValue);
+    }
+
+    function updateResults(totalInvested, estReturns, futureValue) {
         // Update Text
         elements.displayInvested.innerText = formatCurrency(totalInvested);
         elements.displayReturns.innerText = formatCurrency(estReturns);
@@ -575,7 +694,7 @@
     }
 
     // Initial calculation
-    calculate();
+    calculateSIP();
 </script>
 
 </body>
