@@ -163,7 +163,7 @@
         }
 
         .control-note {
-            display: flex;
+            display: none;
             align-items: flex-start;
             gap: 8px;
             margin-top: 10px;
@@ -186,6 +186,55 @@
             font-weight: 700;
             line-height: 15px;
             text-align: center;
+        }
+
+        .tooltip-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border: 1.5px solid var(--primary);
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: help;
+            margin-left: 6px;
+        }
+
+        .tooltip-text {
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+            pointer-events: none;
+        }
+
+        .tooltip-icon:hover .tooltip-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .tooltip-text::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333333;
         }
 
         .donut-chart-container {
@@ -366,13 +415,18 @@
 
         <div class="input-group" id="stepUpStopGroup">
             <div class="input-header">
-                <label for="stepUpStopYear">Stop step-up after</label>
+                <div style="display: flex; align-items: center;">
+                    <label for="stepUpStopYear">Stop step-up after</label>
+                    <div class="tooltip-icon">
+                        i
+                        <span class="tooltip-text" id="stepUpStopNote">Your SIP increases for 5 years, then stays fixed from year 6.</span>
+                    </div>
+                </div>
                 <div class="input-wrapper">
                     <input type="number" id="stepUpStopYear" value="5" min="1" max="10" title="Stop step-up after this year">
                     <span>Yr</span>
                 </div>
             </div>
-            <div class="control-note" id="stepUpStopNote">Your SIP increases for 5 years, then stays fixed from year 6.</div>
         </div>
     </div>
 
