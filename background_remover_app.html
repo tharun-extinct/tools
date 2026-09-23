@@ -173,10 +173,11 @@
         </div>
 
         <div class="upload-zone" id="upload-zone">
-            <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg, image/webp" />
-            <svg style="width: 48px; height: 48px; color: #9CA3AF; margin: 0 auto 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p style="font-size: 1.125rem; font-weight: 500; color: #374151;">Click or drag an image here</p>
-            <p style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem;">Supports JPG, PNG, WEBP</p>
+            <label for="file-input" class="sr-only">Upload an image</label>
+            <input type="file" id="file-input" title="Select an image file" aria-label="Select an image file" accept="image/png, image/jpeg, image/jpg, image/webp" />
+            <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <p class="upload-title">Click or drag an image here</p>
+            <p class="upload-subtitle">Supports JPG, PNG, WEBP</p>
             <div class="btn">Select Image</div>
         </div>
 
@@ -188,7 +189,7 @@
             <div class="image-card">
                 <div class="image-header">Original Image</div>
                 <div class="image-body">
-                    <img id="original-image" alt="Original Upload" style="display: none;" />
+                    <img id="original-image" alt="Original Upload" class="hidden-image" />
                 </div>
             </div>
             <div class="image-card">
@@ -277,11 +278,19 @@
                 setStatus("Processing... Applying AI mask.");
                 
                 // Pass the image URL to the Hugging Face pipeline
-                // This outputs an object containing the processed RawImage
                 const result = await segmenter(imageUrl);
 
-                // The output is a RawImage object. We convert it to an HTML canvas
-                const canvas = result.toCanvas();
+                // Safely extract the RawImage 
+                // (Pipelines sometimes return an array or a mask object depending on the exact version)
+                let processedImage = Array.isArray(result) ? result[0] : result;
+                
+                if (processedImage && processedImage.mask) {
+                    processedImage = processedImage.mask;
+                }
+
+                // Convert it to an HTML canvas. 
+                // Note: Ensure this is spelled .toCanvas() with an 's' at the end!
+                const canvas = processedImage.toCanvas();
                 
                 // Append the canvas to the results container
                 resultContainer.appendChild(canvas);

@@ -1,1 +1,39 @@
 
+/* Utility: visually hidden but accessible label */
+.sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+.upload-icon {
+	width: 48px;
+	height: 48px;
+	color: #9CA3AF;
+	display: block;
+	margin: 0 auto 1rem;
+}
+
+.upload-title {
+	font-size: 1.125rem;
+	font-weight: 500;
+	color: #374151;
+	margin: 0;
+}
+
+.upload-subtitle {
+	font-size: 0.875rem;
+	color: #6B7280;
+	margin-top: 0.5rem;
+}
+
+.hidden-image {
+	display: none;
+}
+
