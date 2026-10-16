@@ -1,0 +1,2694 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grandmaster Studio — Chess Opening & Gambit Sequence Trainer</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overscroll-behavior: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.5);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.8);
+    }
+    canvas {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-amber-500/20">
+          ♞
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-sm sm:text-base tracking-tight text-white">ChessFlow Studio</h1>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Repertoire &amp; Gambit Trainer</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Practice openings, record custom move trees &amp; export PGN/JSON to your File Manager</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <div class="flex items-center bg-slate-950/90 p-1 rounded-xl border border-slate-800" role="tablist">
+        <button id="modeDrillBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-amber-500 text-slate-950 shadow">
+          🎯 Drill Practice
+        </button>
+        <button id="modeRecordBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white">
+          ⏺️ Record Sequence
+        </button>
+        <button id="modeSparBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white">
+          ⚔️ Free Play / AI
+        </button>
+      </div>
+
+      <!-- Global Utility Controls -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button id="openFileManagerBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition-all">
+          <span>📁</span>
+          <span>Sequence Files</span>
+          <span id="savedCountBadge" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px]">9</span>
+        </button>
+        <button id="quickSaveFileBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Export active sequence to OS File Manager">
+          <span>💾</span>
+          <span class="hidden md:inline">Export File</span>
+        </button>
+        <button id="soundToggleBtn" type="button" class="p-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Toggle synthesized chess audio">
+          <span id="soundIcon">🔊</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+    <!-- Left Column: Repertoire Selector & Sequence Details (3 cols on lg) -->
+    <section class="lg:col-span-3 flex flex-col gap-3 order-2 lg:order-1">
+      <!-- Opening / Gambit Library Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Opening &amp; Gambit Library</h2>
+          <button id="newSequenceBtn" type="button" class="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition">
+            + New Line
+          </button>
+        </div>
+
+        <!-- Search & Category Filter -->
+        <div class="flex flex-col gap-2">
+          <input id="repertoireSearchInput" type="text" placeholder="Search Italian Gambit, Evans, Caro-Kann..." class="w-full bg-slate-950 border border-slate-800 focus:border-amber-500/60 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none transition" />
+          <div class="flex items-center gap-1 overflow-x-auto pb-0.5">
+            <button type="button" data-filter="all" class="rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">All</button>
+            <button type="button" data-filter="Gambit" class="rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/70 text-slate-400 hover:text-slate-200 whitespace-nowrap">Gambits</button>
+            <button type="button" data-filter="White" class="rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/70 text-slate-400 hover:text-slate-200 whitespace-nowrap">For White</button>
+            <button type="button" data-filter="Black" class="rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/70 text-slate-400 hover:text-slate-200 whitespace-nowrap">For Black</button>
+            <button type="button" data-filter="Custom" class="rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/70 text-slate-400 hover:text-slate-200 whitespace-nowrap">Saved</button>
+          </div>
+        </div>
+
+        <!-- Repertoire List -->
+        <div id="repertoireListContainer" class="flex flex-col gap-1.5 max-h-72 lg:max-h-80 overflow-y-auto custom-scroll pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Drill Stats & Board Appearance Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Practice Telemetry</h3>
+          <button id="resetStatsBtn" type="button" class="text-[11px] text-slate-400 hover:text-slate-200">Reset</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
+            <div id="statAccuracy" class="text-base font-bold text-emerald-400">100%</div>
+            <div class="text-[10px] text-slate-400">Accuracy</div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
+            <div id="statStreak" class="text-base font-bold text-amber-400">0</div>
+            <div class="text-[10px] text-slate-400">Move Streak</div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
+            <div id="statCompleted" class="text-base font-bold text-sky-400">0</div>
+            <div class="text-[10px] text-slate-400">Lines Cleared</div>
+          </div>
+        </div>
+
+        <div class="pt-1 border-t border-slate-800/80 flex flex-col gap-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">Board Theme</span>
+            <select id="boardThemeSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none">
+              <option value="classic">Classic Tournament Wood</option>
+              <option value="emerald">Championship Green</option>
+              <option value="midnight">Midnight Slate</option>
+              <option value="ocean">Deep Ocean</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">Show Book Arrow Hint</span>
+            <button id="toggleGuideArrowBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              ON
+            </button>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">Auto-Play Opponent Book Move</span>
+            <button id="toggleAutoOpponentBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              ON
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center Column: Interactive Canvas Chessboard & Transport Bar (5 cols on lg) -->
+    <section class="lg:col-span-5 flex flex-col items-center gap-3 order-1 lg:order-2">
+      <!-- Active Sequence Banner -->
+      <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-xl">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span id="activeSideBadge" class="px-2 py-1 rounded-lg text-xs font-bold bg-white text-slate-950 shadow-sm shrink-0">White</span>
+          <div class="min-w-0">
+            <h2 id="activeOpeningTitle" class="font-bold text-sm text-white truncate">Italian Gambit (Main Line)</h2>
+            <p id="activeOpeningEco" class="text-[11px] text-slate-400 truncate">ECO C50 • Tactical Center Sacrifice</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span id="turnStatusPill" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            White to move
+          </span>
+        </div>
+      </div>
+
+      <!-- Evaluation + Canvas Board Wrapper -->
+      <div class="w-full flex items-stretch gap-2 justify-center">
+        <!-- Vertical Evaluation Bar -->
+        <div class="w-3.5 sm:w-4 bg-slate-800 rounded-full overflow-hidden flex flex-col border border-slate-700 shrink-0 shadow-inner" title="Position Evaluation">
+          <div id="evalBarBlack" class="bg-slate-900 transition-all duration-300" style="height: 50%;"></div>
+          <div id="evalBarWhite" class="bg-amber-100 transition-all duration-300 flex-1"></div>
+        </div>
+
+        <!-- Responsive Square Canvas Container -->
+        <div id="boardContainer" class="relative w-full max-w-[470px] aspect-square bg-slate-900 rounded-2xl p-1.5 sm:p-2 border border-slate-800 shadow-2xl flex items-center justify-center">
+          <canvas id="chessBoardCanvas" class="w-full h-full rounded-xl cursor-pointer block"></canvas>
+
+          <!-- Promotion Modal Overlay (Hidden unless pawn reaches 8th/1st rank) -->
+          <div id="promotionOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-4 z-20">
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-300 mb-3">Choose Promotion Piece</p>
+            <div class="flex items-center gap-3">
+              <button type="button" data-promo="q" class="promo-choice-btn w-14 h-14 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-2xl font-bold border border-slate-700 transition">♛</button>
+              <button type="button" data-promo="r" class="promo-choice-btn w-14 h-14 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-2xl font-bold border border-slate-700 transition">♜</button>
+              <button type="button" data-promo="b" class="promo-choice-btn w-14 h-14 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-2xl font-bold border border-slate-700 transition">♝</button>
+              <button type="button" data-promo="n" class="promo-choice-btn w-14 h-14 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-2xl font-bold border border-slate-700 transition">♞</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Transport & Action Controls -->
+      <div class="w-full max-w-[490px] bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xl">
+        <!-- Navigation Step Buttons -->
+        <div class="flex items-center gap-1">
+          <button id="stepStartBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition" title="Jump to Start (Home)">⏮</button>
+          <button id="stepBackBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition" title="Step Back (Left Arrow)">◀</button>
+          <button id="stepForwardBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition" title="Step Forward (Right Arrow)">▶</button>
+          <button id="stepEndBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition" title="Jump to End">⏭</button>
+        </div>
+
+        <!-- Drill & Board Action Buttons -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button id="hintMoveBtn" type="button" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition">
+            💡 Hint
+          </button>
+          <button id="playBookMoveBtn" type="button" class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-semibold transition">
+            ▶ Play Book Move
+          </button>
+          <button id="flipBoardBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition" title="Flip Board Orientation">
+            🔄 Flip
+          </button>
+          <button id="restartLineBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition" title="Restart Sequence">
+            ↺ Restart
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Coach Commentary, Move Tree Sequence & Save/Export Controls (4 cols on lg) -->
+    <section class="lg:col-span-4 flex flex-col gap-3 order-3">
+      <!-- Live Coach & Move Feedback Banner -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Grandmaster Coach</h3>
+          </div>
+          <span id="drillProgressBadge" class="text-xs font-mono font-semibold text-amber-400">Move 0 / 8</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+          <div id="drillProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300" style="width: 0%;"></div>
+        </div>
+
+        <div id="coachFeedbackBox" class="bg-slate-950/90 border border-slate-800/90 rounded-xl p-3 text-xs leading-relaxed text-slate-200">
+          Welcome! In <strong>Drill Practice</strong> mode, play the book moves for your side. The arrow or Hint button shows the target move, and the coach explains the tactical purpose of every ply.
+        </div>
+
+        <!-- AI Sparring Controls (visible/active in Free Play mode or anytime) -->
+        <div id="aiSparringBar" class="hidden pt-2 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
+          <span class="text-slate-400 font-medium">AI Sparring Strength:</span>
+          <div class="flex items-center gap-1">
+            <button type="button" data-depth="1" class="ai-lvl-btn px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px]">Casual</button>
+            <button type="button" data-depth="2" class="ai-lvl-btn px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-semibold">Club</button>
+            <button type="button" data-depth="3" class="ai-lvl-btn px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px]">Master</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Move Sequence Table & Annotation Editor -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Move Sequence &amp; Book Tree</h3>
+          <span id="plyCounterLabel" class="text-[11px] font-mono text-slate-400">0 plies played</span>
+        </div>
+
+        <!-- Move Pairs Container -->
+        <div id="moveListContainer" class="bg-slate-950 border border-slate-800/90 rounded-xl p-2 h-48 overflow-y-auto custom-scroll font-mono text-xs flex flex-col gap-1">
+          <!-- Dynamically populated move rows -->
+        </div>
+
+        <!-- Current Move Annotation Input (for recording/editing notes) -->
+        <div class="flex flex-col gap-1.5">
+          <label for="moveNoteInput" class="text-[11px] font-medium text-slate-400">Move Coaching Note (saved inside PGN/JSON):</label>
+          <div class="flex gap-1.5">
+            <input id="moveNoteInput" type="text" placeholder="Add tactical note for current move..." class="flex-1 bg-slate-950 border border-slate-800 focus:border-amber-500/60 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none" />
+            <button id="saveMoveNoteBtn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-slate-700 transition">
+              Save Note
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sequence Recorder & Direct File Save Panel -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Save / Export Sequence</h3>
+          <span class="text-[10px] font-mono text-slate-400">PGN • JSON • FEN</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input id="saveSequenceTitleInput" type="text" placeholder="Sequence Name (e.g. My Evans Trap)" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none" />
+          <select id="saveSequenceSideSelect" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 outline-none">
+            <option value="w">Practice as White</option>
+            <option value="b">Practice as Black</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="saveToLibraryBtn" type="button" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/10 transition flex items-center justify-center gap-1.5">
+            <span>📌</span>
+            <span>Save to Library</span>
+          </button>
+          <button id="saveToFilePickerBtn" type="button" class="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs transition flex items-center justify-center gap-1.5">
+            <span>💾</span>
+            <span>Save to File Manager</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-1 text-[11px] text-slate-400">
+          <button id="importFromFileBtn" type="button" class="hover:text-white underline decoration-slate-600 underline-offset-2">
+            📂 Load `.pgn` / `.json` from File Manager
+          </button>
+          <button id="copyPgnBtn" type="button" class="hover:text-amber-300 font-mono">
+            📋 Copy PGN
+          </button>
+        </div>
+        <input id="hiddenFileInput" type="file" accept=".pgn,.json,.txt" class="hidden" />
+      </div>
+    </section>
+  </main>
+
+  <!-- Sequence File Manager Modal (Routes to local library + OS File Manager Export/Import) -->
+  <div id="fileManagerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📁</span>
+            <span>Sequence File Manager &amp; Format Hub</span>
+          </h2>
+          <p class="text-xs text-slate-400">Manage saved opening sequences, export to your OS File Manager (`.pgn` or `.chessrep.json`), or import external files.</p>
+        </div>
+        <button id="closeFileManagerBtn" type="button" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 overflow-y-auto custom-scroll flex flex-col gap-4">
+        <!-- Format Selector & OS File Manager Actions -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <label for="exportFormatSelect" class="text-xs font-semibold text-slate-300">Preferred Saving Format:</label>
+            <select id="exportFormatSelect" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-medium outline-none">
+              <option value="pgn">Standard Annotated PGN (.pgn) — Recommended</option>
+              <option value="json">Rich Repertoire Bundle (.chessrep.json)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="modalImportFileBtn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition">
+              📂 Open File from Disk
+            </button>
+            <button id="modalExportAllBtn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition">
+              📦 Export Full Repertoire Pack
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Sequences Table -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <th class="py-2.5 px-3 font-semibold">Sequence Title</th>
+                <th class="py-2.5 px-3 font-semibold">Side</th>
+                <th class="py-2.5 px-3 font-semibold">Moves (PGN Preview)</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fileManagerTableBody" class="divide-y divide-slate-800/70 bg-slate-900/50">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Raw PGN / FEN Paste & Inspect Drawer -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">Direct PGN / Move Sequence Inspector &amp; Importer</span>
+            <button id="loadPgnTextBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold">
+              Import PGN Text into Board
+            </button>
+          </div>
+          <textarea id="pgnInspectorTextarea" rows="3" placeholder="Paste any PGN move sequence here (e.g. 1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d4 exd4)..." class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-xs text-slate-200 outline-none focus:border-amber-500/60"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="fixed bottom-4 right-4 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-300 bg-slate-900 border border-amber-500/50 text-slate-100 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2">
+    <span id="toastIcon">✨</span>
+    <span id="toastText">Sequence saved!</span>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. COMPLETE SELF-CONTAINED LEGAL CHESS ENGINE (FEN, SAN, PGN, RULES)
+     *************************************************************************/
+    const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
+    const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+    class ChessEngine {
+      constructor(fen = START_FEN) {
+        this.loadFen(fen);
+      }
+
+      loadFen(fen) {
+        this.board = Array.from({ length: 8 }, () => Array(8).fill(null));
+        const parts = fen.trim().split(/\s+/);
+        const rows = parts[0].split('/');
+        for (let r = 0; r < 8; r++) {
+          let c = 0;
+          for (const ch of rows[r]) {
+            if (ch >= '1' && ch <= '8') {
+              c += parseInt(ch, 10);
+            } else {
+              const color = ch === ch.toUpperCase() ? 'w' : 'b';
+              this.board[r][c] = { type: ch.toLowerCase(), color };
+              c++;
+            }
+          }
+        }
+        this.turn = parts[1] || 'w';
+        const castleStr = parts[2] || '-';
+        this.castling = {
+          K: castleStr.includes('K'),
+          Q: castleStr.includes('Q'),
+          k: castleStr.includes('k'),
+          q: castleStr.includes('q')
+        };
+        this.epSquare = parts[3] && parts[3] !== '-' ? ChessEngine.algToCoord(parts[3]) : null;
+        this.halfMove = parseInt(parts[4] || '0', 10);
+        this.fullMove = parseInt(parts[5] || '1', 10);
+      }
+
+      toFen() {
+        const rows = [];
+        for (let r = 0; r < 8; r++) {
+          let empty = 0;
+          let rowStr = '';
+          for (let c = 0; c < 8; c++) {
+            const p = this.board[r][c];
+            if (!p) {
+              empty++;
+            } else {
+              if (empty > 0) {
+                rowStr += empty;
+                empty = 0;
+              }
+              rowStr += p.color === 'w' ? p.type.toUpperCase() : p.type;
+            }
+          }
+          if (empty > 0) rowStr += empty;
+          rows.push(rowStr);
+        }
+        let cStr = '';
+        if (this.castling.K) cStr += 'K';
+        if (this.castling.Q) cStr += 'Q';
+        if (this.castling.k) cStr += 'k';
+        if (this.castling.q) cStr += 'q';
+        if (!cStr) cStr = '-';
+        const ep = this.epSquare ? ChessEngine.coordToAlg(this.epSquare.r, this.epSquare.c) : '-';
+        return `${rows.join('/')} ${this.turn} ${cStr} ${ep} ${this.halfMove} ${this.fullMove}`;
+      }
+
+      clone() {
+        return new ChessEngine(this.toFen());
+      }
+
+      static coordToAlg(r, c) {
+        return FILES[c] + RANKS[r];
+      }
+
+      static algToCoord(alg) {
+        if (!alg || alg.length < 2) return null;
+        const c = FILES.indexOf(alg[0]);
+        const r = RANKS.indexOf(alg[1]);
+        if (c < 0 || r < 0) return null;
+        return { r, c };
+      }
+
+      inBounds(r, c) {
+        return r >= 0 && r < 8 && c >= 0 && c < 8;
+      }
+
+      findKing(color) {
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const p = this.board[r][c];
+            if (p && p.color === color && p.type === 'k') return { r, c };
+          }
+        }
+        return null;
+      }
+
+      isSquareAttacked(targetR, targetC, byColor) {
+        // Pawn attacks
+        const pawnDir = byColor === 'w' ? 1 : -1;
+        for (const dc of [-1, 1]) {
+          const pr = targetR + pawnDir;
+          const pc = targetC + dc;
+          if (this.inBounds(pr, pc)) {
+            const p = this.board[pr][pc];
+            if (p && p.color === byColor && p.type === 'p') return true;
+          }
+        }
+        // Knight attacks
+        const knightJumps = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+        for (const [dr, dc] of knightJumps) {
+          const nr = targetR + dr, nc = targetC + dc;
+          if (this.inBounds(nr, nc)) {
+            const p = this.board[nr][nc];
+            if (p && p.color === byColor && p.type === 'n') return true;
+          }
+        }
+        // King attacks
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const kr = targetR + dr, kc = targetC + dc;
+            if (this.inBounds(kr, kc)) {
+              const p = this.board[kr][kc];
+              if (p && p.color === byColor && p.type === 'k') return true;
+            }
+          }
+        }
+        // Orthogonal (Rook / Queen)
+        const orthoDirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        for (const [dr, dc] of orthoDirs) {
+          let r = targetR + dr, c = targetC + dc;
+          while (this.inBounds(r, c)) {
+            const p = this.board[r][c];
+            if (p) {
+              if (p.color === byColor && (p.type === 'r' || p.type === 'q')) return true;
+              break;
+            }
+            r += dr; c += dc;
+          }
+        }
+        // Diagonal (Bishop / Queen)
+        const diagDirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+        for (const [dr, dc] of diagDirs) {
+          let r = targetR + dr, c = targetC + dc;
+          while (this.inBounds(r, c)) {
+            const p = this.board[r][c];
+            if (p) {
+              if (p.color === byColor && (p.type === 'b' || p.type === 'q')) return true;
+              break;
+            }
+            r += dr; c += dc;
+          }
+        }
+        return false;
+      }
+
+      inCheck(color = this.turn) {
+        const k = this.findKing(color);
+        if (!k) return false;
+        const enemy = color === 'w' ? 'b' : 'w';
+        return this.isSquareAttacked(k.r, k.c, enemy);
+      }
+
+      generatePseudoMoves(color = this.turn) {
+        const moves = [];
+        const enemy = color === 'w' ? 'b' : 'w';
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const p = this.board[r][c];
+            if (!p || p.color !== color) continue;
+
+            if (p.type === 'p') {
+              const dir = color === 'w' ? -1 : 1;
+              const startRank = color === 'w' ? 6 : 1;
+              const promoRank = color === 'w' ? 0 : 7;
+              const nr = r + dir;
+              if (this.inBounds(nr, c) && !this.board[nr][c]) {
+                if (nr === promoRank) {
+                  for (const promo of ['q', 'r', 'b', 'n']) {
+                    moves.push({ from: { r, c }, to: { r: nr, c }, piece: p, promotion: promo });
+                  }
+                } else {
+                  moves.push({ from: { r, c }, to: { r: nr, c }, piece: p });
+                  const nr2 = r + dir * 2;
+                  if (r === startRank && !this.board[nr2][c]) {
+                    moves.push({ from: { r, c }, to: { r: nr2, c }, piece: p, doublePawn: true });
+                  }
+                }
+              }
+              for (const dc of [-1, 1]) {
+                const nc = c + dc;
+                if (!this.inBounds(nr, nc)) continue;
+                const target = this.board[nr][nc];
+                if (target && target.color === enemy) {
+                  if (nr === promoRank) {
+                    for (const promo of ['q', 'r', 'b', 'n']) {
+                      moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p, captured: target, promotion: promo });
+                    }
+                  } else {
+                    moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p, captured: target });
+                  }
+                } else if (this.epSquare && this.epSquare.r === nr && this.epSquare.c === nc) {
+                  moves.push({
+                    from: { r, c },
+                    to: { r: nr, c: nc },
+                    piece: p,
+                    captured: { type: 'p', color: enemy },
+                    enPassant: true
+                  });
+                }
+              }
+            } else if (p.type === 'n') {
+              const jumps = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+              for (const [dr, dc] of jumps) {
+                const nr = r + dr, nc = c + dc;
+                if (!this.inBounds(nr, nc)) continue;
+                const target = this.board[nr][nc];
+                if (!target || target.color === enemy) {
+                  moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p, captured: target || null });
+                }
+              }
+            } else if (p.type === 'k') {
+              for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                  if (dr === 0 && dc === 0) continue;
+                  const nr = r + dr, nc = c + dc;
+                  if (!this.inBounds(nr, nc)) continue;
+                  const target = this.board[nr][nc];
+                  if (!target || target.color === enemy) {
+                    moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p, captured: target || null });
+                  }
+                }
+              }
+              // Castling
+              const homeRank = color === 'w' ? 7 : 0;
+              if (r === homeRank && c === 4 && !this.inCheck(color)) {
+                const canK = color === 'w' ? this.castling.K : this.castling.k;
+                const canQ = color === 'w' ? this.castling.Q : this.castling.q;
+                if (
+                  canK &&
+                  !this.board[homeRank][5] &&
+                  !this.board[homeRank][6] &&
+                  !this.isSquareAttacked(homeRank, 5, enemy) &&
+                  !this.isSquareAttacked(homeRank, 6, enemy)
+                ) {
+                  moves.push({ from: { r, c }, to: { r: homeRank, c: 6 }, piece: p, castling: 'K' });
+                }
+                if (
+                  canQ &&
+                  !this.board[homeRank][3] &&
+                  !this.board[homeRank][2] &&
+                  !this.board[homeRank][1] &&
+                  !this.isSquareAttacked(homeRank, 3, enemy) &&
+                  !this.isSquareAttacked(homeRank, 2, enemy)
+                ) {
+                  moves.push({ from: { r, c }, to: { r: homeRank, c: 2 }, piece: p, castling: 'Q' });
+                }
+              }
+            } else {
+              const dirs =
+                p.type === 'r'
+                  ? [[-1,0],[1,0],[0,-1],[0,1]]
+                  : p.type === 'b'
+                  ? [[-1,-1],[-1,1],[1,-1],[1,1]]
+                  : [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+              for (const [dr, dc] of dirs) {
+                let nr = r + dr, nc = c + dc;
+                while (this.inBounds(nr, nc)) {
+                  const target = this.board[nr][nc];
+                  if (!target) {
+                    moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p });
+                  } else {
+                    if (target.color === enemy) {
+                      moves.push({ from: { r, c }, to: { r: nr, c: nc }, piece: p, captured: target });
+                    }
+                    break;
+                  }
+                  nr += dr; nc += dc;
+                }
+              }
+            }
+          }
+        }
+        return moves;
+      }
+
+      applyMoveUnchecked(m) {
+        const { from, to, piece } = m;
+        this.board[to.r][to.c] = m.promotion
+          ? { type: m.promotion, color: piece.color }
+          : { type: piece.type, color: piece.color };
+        this.board[from.r][from.c] = null;
+
+        if (m.enPassant) {
+          const capR = piece.color === 'w' ? to.r + 1 : to.r - 1;
+          this.board[capR][to.c] = null;
+        }
+        if (m.castling === 'K') {
+          const r = from.r;
+          this.board[r][5] = this.board[r][7];
+          this.board[r][7] = null;
+        } else if (m.castling === 'Q') {
+          const r = from.r;
+          this.board[r][3] = this.board[r][0];
+          this.board[r][0] = null;
+        }
+
+        // Update castling rights
+        if (piece.type === 'k') {
+          if (piece.color === 'w') { this.castling.K = false; this.castling.Q = false; }
+          else { this.castling.k = false; this.castling.q = false; }
+        }
+        if (from.r === 7 && from.c === 0) this.castling.Q = false;
+        if (from.r === 7 && from.c === 7) this.castling.K = false;
+        if (from.r === 0 && from.c === 0) this.castling.q = false;
+        if (from.r === 0 && from.c === 7) this.castling.k = false;
+        if (to.r === 7 && to.c === 0) this.castling.Q = false;
+        if (to.r === 7 && to.c === 7) this.castling.K = false;
+        if (to.r === 0 && to.c === 0) this.castling.q = false;
+        if (to.r === 0 && to.c === 7) this.castling.k = false;
+
+        this.epSquare = m.doublePawn
+          ? { r: piece.color === 'w' ? from.r - 1 : from.r + 1, c: from.c }
+          : null;
+
+        if (piece.type === 'p' || m.captured) this.halfMove = 0;
+        else this.halfMove++;
+
+        if (this.turn === 'b') this.fullMove++;
+        this.turn = this.turn === 'w' ? 'b' : 'w';
+      }
+
+      getLegalMoves() {
+        const pseudo = this.generatePseudoMoves(this.turn);
+        const legal = [];
+        for (const m of pseudo) {
+          const copy = this.clone();
+          copy.applyMoveUnchecked(m);
+          if (!copy.inCheck(this.turn)) {
+            legal.push(m);
+          }
+        }
+        // Attach SAN notation to each legal move
+        for (const m of legal) {
+          m.fromAlg = ChessEngine.coordToAlg(m.from.r, m.from.c);
+          m.toAlg = ChessEngine.coordToAlg(m.to.r, m.to.c);
+          m.san = this.moveToSan(m, legal);
+        }
+        return legal;
+      }
+
+      moveToSan(m, allLegal) {
+        let san = '';
+        if (m.castling === 'K') san = 'O-O';
+        else if (m.castling === 'Q') san = 'O-O-O';
+        else {
+          if (m.piece.type !== 'p') {
+            san += m.piece.type.toUpperCase();
+            const ambiguous = allLegal.filter(
+              o =>
+                o !== m &&
+                o.piece.type === m.piece.type &&
+                o.to.r === m.to.r &&
+                o.to.c === m.to.c
+            );
+            if (ambiguous.length > 0) {
+              const sameFile = ambiguous.some(o => o.from.c === m.from.c);
+              const sameRank = ambiguous.some(o => o.from.r === m.from.r);
+              if (!sameFile) san += FILES[m.from.c];
+              else if (!sameRank) san += RANKS[m.from.r];
+              else san += FILES[m.from.c] + RANKS[m.from.r];
+            }
+          } else if (m.captured) {
+            san += FILES[m.from.c];
+          }
+          if (m.captured) san += 'x';
+          san += ChessEngine.coordToAlg(m.to.r, m.to.c);
+          if (m.promotion) san += '=' + m.promotion.toUpperCase();
+        }
+        const copy = this.clone();
+        copy.applyMoveUnchecked(m);
+        if (copy.inCheck(copy.turn)) {
+          const nextMoves = copy.getLegalMovesWithoutSan();
+          san += nextMoves.length === 0 ? '#' : '+';
+        }
+        return san;
+      }
+
+      getLegalMovesWithoutSan() {
+        const pseudo = this.generatePseudoMoves(this.turn);
+        const legal = [];
+        for (const m of pseudo) {
+          const copy = this.clone();
+          copy.applyMoveUnchecked(m);
+          if (!copy.inCheck(this.turn)) legal.push(m);
+        }
+        return legal;
+      }
+
+      makeMoveBySan(sanInput) {
+        const clean = sanInput.trim().replace(/[+#!?]+$/g, '').replace(/^0-0-0$/, 'O-O-O').replace(/^0-0$/, 'O-O');
+        const legal = this.getLegalMoves();
+        for (const m of legal) {
+          const mClean = m.san.replace(/[+#!?]+$/g, '');
+          if (mClean === clean || m.san === sanInput.trim()) {
+            this.applyMoveUnchecked(m);
+            return m;
+          }
+        }
+        return null;
+      }
+
+      makeMoveByCoords(fromR, fromC, toR, toC, promo = 'q') {
+        const legal = this.getLegalMoves();
+        const match = legal.find(
+          m =>
+            m.from.r === fromR &&
+            m.from.c === fromC &&
+            m.to.r === toR &&
+            m.to.c === toC &&
+            (!m.promotion || m.promotion === promo)
+        );
+        if (match) {
+          this.applyMoveUnchecked(match);
+          return match;
+        }
+        return null;
+      }
+
+      evaluateMaterial() {
+        const values = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+        let score = 0;
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const p = this.board[r][c];
+            if (!p) continue;
+            let v = values[p.type] || 0;
+            // Center control bonus
+            if ((r === 3 || r === 4) && (c === 3 || c === 4)) v += 18;
+            else if (r >= 2 && r <= 5 && c >= 2 && c <= 5) v += 8;
+            score += p.color === 'w' ? v : -v;
+          }
+        }
+        return score / 100;
+      }
+    }
+
+    /*************************************************************************
+     * 2. SYNTHESIZED WEB AUDIO SOUND EFFECTS (NO EXTERNAL AUDIO FILES)
+     *************************************************************************/
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      ensureCtx() {
+        if (this.muted) return false;
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        return !!this.ctx;
+      }
+
+      playMove(isCapture = false, isCheck = false) {
+        if (!this.ensureCtx()) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        if (isCheck) {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(587.33, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.14);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (isCapture) {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.exponentialRampToValueAtTime(95, now + 0.09);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.065);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        }
+      }
+
+      playSuccess() {
+        if (!this.ensureCtx()) return;
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.07;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        });
+      }
+
+      playError() {
+        if (!this.ensureCtx()) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.setValueAtTime(130, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+    }
+
+    /*************************************************************************
+     * 3. DEFAULT OPENING & GAMBIT REPERTOIRE LIBRARY
+     *************************************************************************/
+    const DEFAULT_REPERTOIRE = [
+      {
+        id: 'italian-gambit-main',
+        title: 'Italian Gambit (Main Tactical Line)',
+        eco: 'C50 • Sharp Center Sacrifice',
+        category: 'Gambit',
+        side: 'w',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'd4', 'exd4', 'c3', 'dxc3', 'Bxf7+', 'Kxf7', 'Qd5+', 'Kf8', 'Qxc5+'],
+        notes: {
+          0: '1. e4 claims central space and opens diagonals for both the Queen and King\'s Bishop.',
+          2: '2. Nf3 develops with tempo, attacking Black\'s e5 pawn.',
+          4: '3. Bc4 enters the Italian Game, eyeing the vulnerable f7 square.',
+          6: '4. d4! The Italian Gambit — immediately challenging the center before Black castles.',
+          8: '5. c3 offers a second pawn to rip open lines and accelerate White\'s development.',
+          10: '6. Bxf7+! Decoying the Black King onto an exposed square so Qd5+ forks King and Bishop.',
+          12: '7. Qd5+! Double attack on the King on f7 and the undefended Bishop on c5.',
+          14: '8. Qxc5+ recovers the piece with a dominant initiative and ruined Black King safety!'
+        }
+      },
+      {
+        id: 'evans-gambit',
+        title: 'Evans Gambit (Romantic Attack)',
+        eco: 'C51 • Queen\'s Wing Sacrifice',
+        category: 'Gambit',
+        side: 'w',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'b4', 'Bxb4', 'c3', 'Ba5', 'd4', 'exd4', 'O-O'],
+        notes: {
+          0: 'Open with 1. e4 to seize central control.',
+          4: '3. Bc4 establishes the Italian Bishop targeting f7.',
+          6: '4. b4! The signature Evans Gambit move — deflecting Black\'s bishop from the a7-g1 diagonal.',
+          8: '5. c3 gains a free tempo on the bishop to prepare the d4 central strike.',
+          10: '6. d4 blasts open the center while Black\'s bishop is side-lined on a5.',
+          12: '7. O-O tucks the King away and activates the Rook for a crushing attack down the e-file.'
+        }
+      },
+      {
+        id: 'fried-liver-attack',
+        title: 'Italian: Fried Liver Attack',
+        eco: 'C57 • Knight Sacrifice on f7',
+        category: 'Gambit',
+        side: 'w',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6', 'Ng5', 'd5', 'exd5', 'Nxd5', 'Nxf7', 'Kxf7', 'Qf3+', 'Ke6', 'Nc3'],
+        notes: {
+          4: '3. Bc4 sets up the Italian structure.',
+          6: '4. Ng5! Immediately teams up with the c4-bishop against f7.',
+          8: '5. exd5 opens the e-file and intercepts the d5 block.',
+          10: '6. Nxf7!! The Fried Liver sacrifice — forcing the Black King out into the center.',
+          12: '7. Qf3+ forces Black\'s King to e6 to defend the pinned d5 knight.',
+          14: '8. Nc3 piles maximum pressure onto the pinned d5 knight.'
+        }
+      },
+      {
+        id: 'giuoco-piano-main',
+        title: 'Italian Game: Giuoco Piano',
+        eco: 'C53 • Classical Positional Build-Up',
+        category: 'White',
+        side: 'w',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'c3', 'Nf6', 'd3', 'd6', 'O-O', 'O-O', 'Re1', 'a6'],
+        notes: {
+          6: '4. c3 prepares a supported d4 or a flexible d3 structure.',
+          8: '5. d3 solidifies e4 and keeps the position strategic and maneuvering.',
+          10: '6. O-O secures King safety and prepares Re1 + Nbd2-f1-g3.'
+        }
+      },
+      {
+        id: 'kings-gambit-accepted',
+        title: 'King\'s Gambit Accepted (Kieseritzky)',
+        eco: 'C39 • Ultra-Sharp f-File Opening',
+        category: 'Gambit',
+        side: 'w',
+        moves: ['e4', 'e5', 'f4', 'exf4', 'Nf3', 'g5', 'h4', 'g4', 'Ne5', 'Nf6', 'Bc4', 'd5', 'exd5'],
+        notes: {
+          2: '2. f4! The historic King\'s Gambit — trading the f-pawn to dominate the center and open the f-file.',
+          4: '3. Nf3 prevents Qh4+ and develops rapidly.',
+          6: '4. h4 undermines Black\'s g5 pawn chain.',
+          8: '5. Ne5 centralizes the Knight on an aggressive outpost attacking g4 and f7.'
+        }
+      },
+      {
+        id: 'queens-gambit-trap',
+        title: 'Queen\'s Gambit Accepted Trap',
+        eco: 'D20 • Early b5 Refutation',
+        category: 'Gambit',
+        side: 'w',
+        moves: ['d4', 'd5', 'c4', 'dxc4', 'e3', 'b5', 'a4', 'c6', 'axb5', 'cxb5', 'Qf3'],
+        notes: {
+          2: '2. c4! The Queen\'s Gambit — offering a wing pawn to tear down Black\'s d5 center.',
+          4: '3. e3 prepares to recapture on c4 while tempting Black into greedily defending c4 with ...b5?',
+          6: '4. a4! Immediately undermines the b5-c4 pawn chain.',
+          8: '5. axb5 opens the long a8-h1 diagonal.',
+          10: '6. Qf3! Wins a full Rook or minor piece on a8/b8 along the weakened diagonal!'
+        }
+      },
+      {
+        id: 'sicilian-najdorf',
+        title: 'Sicilian Defense: Najdorf Counterattack',
+        eco: 'B90 • Dynamic Black Counterplay',
+        category: 'Black',
+        side: 'b',
+        moves: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6', 'Be3', 'e5', 'Nb3', 'Be6'],
+        notes: {
+          1: '1...c5 fights for d4 asymmetrically without creating a symmetrical game.',
+          5: '3...cxd4 trades a flank c-pawn for White\'s central d-pawn.',
+          9: '5...a6! The Najdorf trademark — denies Bb5/Nb5 and prepares queenside expansion with ...b5.',
+          11: '6...e5 kicks the centralized Knight from d4 and fights for d5.'
+        }
+      },
+      {
+        id: 'caro-kann-classical',
+        title: 'Caro-Kann Defense: Classical Line',
+        eco: 'B18 • Solid Light-Square Control',
+        category: 'Black',
+        side: 'b',
+        moves: ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4', 'Nxe4', 'Bf5', 'Ng3', 'Bg6', 'h4', 'h6', 'Nf3', 'Nd7'],
+        notes: {
+          1: '1...c6 prepares ...d5 while keeping the c8-bishop\'s diagonal open.',
+          7: '4...Bf5! Develops the light-squared bishop outside the pawn chain with tempo.',
+          11: '6...h6! Essential prophylaxis giving the g6-bishop an escape square on h7.'
+        }
+      },
+      {
+        id: 'stafford-gambit',
+        title: 'Stafford Gambit (Black Tactical Trap)',
+        eco: 'C42 • Venomous Petrov Sacrifice',
+        category: 'Gambit',
+        side: 'b',
+        moves: ['e4', 'e5', 'Nf3', 'Nf6', 'Nxe5', 'Nc6', 'Nxc6', 'dxc6', 'd3', 'Bc5', 'Bg5', 'Nxe4', 'Bxd8', 'Bxf2+', 'Ke2', 'Bg4#'],
+        notes: {
+          5: '3...Nc6!? The Stafford Gambit — sacrificing a pawn for rapid open diagonals and deadly traps.',
+          9: '5...Bc5 targets f2 immediately.',
+          11: '6...Nxe4!! Queen sacrifice! If White greedily captures 7. Bxd8?, Black has forced mate in two!',
+          13: '7...Bxf2+ forces the White King to e2.',
+          15: '8...Bg4# Checkmate in the middle of the board!'
+        }
+      }
+    ];
+
+    /*************************************************************************
+     * 4. APPLICATION STATE & STORAGE MANAGEMENT
+     *************************************************************************/
+    const STORAGE_KEY = 'chessflow_repertoire_v1';
+    const STATS_KEY = 'chessflow_stats_v1';
+
+    const state = {
+      mode: 'drill', // 'drill' | 'record' | 'spar'
+      repertoire: [],
+      activeSeqId: 'italian-gambit-main',
+      filterCategory: 'all',
+      searchQuery: '',
+      boardFlipped: false,
+      boardTheme: 'classic',
+      showGuideArrow: true,
+      autoPlayOpponent: true,
+      aiDepth: 2,
+
+      // Live game history
+      engine: new ChessEngine(),
+      moveHistory: [], // [{ san, from, to, fenAfter, note, piece, captured }]
+      currentPly: 0,
+      customNotes: {},
+
+      // Interaction state
+      selectedSquare: null,
+      legalMovesFromSelected: [],
+      pendingPromotion: null,
+      cursorSquare: { r: 6, c: 4 },
+      opponentTimer: null,
+
+      // Telemetry
+      stats: {
+        attempts: 0,
+        correct: 0,
+        streak: 0,
+        completed: 0
+      }
+    };
+
+    const sound = new SoundFX();
+
+    function loadSavedState() {
+      try {
+        const rawRep = localStorage.getItem(STORAGE_KEY);
+        if (rawRep) {
+          const parsed = JSON.parse(rawRep);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            state.repertoire = parsed;
+          } else {
+            state.repertoire = JSON.parse(JSON.stringify(DEFAULT_REPERTOIRE));
+          }
+        } else {
+          state.repertoire = JSON.parse(JSON.stringify(DEFAULT_REPERTOIRE));
+        }
+      } catch (e) {
+        state.repertoire = JSON.parse(JSON.stringify(DEFAULT_REPERTOIRE));
+      }
+
+      try {
+        const rawStats = localStorage.getItem(STATS_KEY);
+        if (rawStats) {
+          state.stats = Object.assign(state.stats, JSON.parse(rawStats));
+        }
+      } catch (e) {
+        // Ignore storage restrictions
+      }
+    }
+
+    function persistRepertoire() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.repertoire));
+      } catch (e) {
+        // Fallback in-memory
+      }
+      updateSavedCountBadge();
+    }
+
+    function persistStats() {
+      try {
+        localStorage.setItem(STATS_KEY, JSON.stringify(state.stats));
+      } catch (e) {}
+      renderTelemetry();
+    }
+
+    function getActiveSequence() {
+      return state.repertoire.find(item => item.id === state.activeSeqId) || state.repertoire[0];
+    }
+
+    /*************************************************************************
+     * 5. HTML5 CANVAS CHESSBOARD RENDERER (HIGH-DPI + VECTOR STAUNTON PIECES)
+     *************************************************************************/
+    const BOARD_THEMES = {
+      classic: { light: '#f3e5ab', dark: '#b58863', border: '#27201c', coordLight: '#8c6239', coordDark: '#f3e5ab' },
+      emerald: { light: '#eeeed2', dark: '#769656', border: '#1e2923', coordLight: '#59753d', coordDark: '#eeeed2' },
+      midnight: { light: '#cbd5e1', dark: '#475569', border: '#0f172a', coordLight: '#334155', coordDark: '#cbd5e1' },
+      ocean: { light: '#e0f2fe', dark: '#0284c7', border: '#082f49', coordLight: '#0369a1', coordDark: '#e0f2fe' }
+    };
+
+    const PIECE_UNICODE = {
+      w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
+      b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
+    };
+
+    function resizeAndDrawBoard() {
+      const container = document.getElementById('boardContainer');
+      const canvas = document.getElementById('chessBoardCanvas');
+      if (!container || !canvas) return;
+      const rect = container.getBoundingClientRect();
+      const size = Math.max(240, Math.floor(Math.min(rect.width, rect.height) - 12));
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+      drawChessBoard();
+    }
+
+    function boardToScreen(r, c) {
+      const dr = state.boardFlipped ? 7 - r : r;
+      const dc = state.boardFlipped ? 7 - c : c;
+      return { sr: dr, sc: dc };
+    }
+
+    function screenToBoard(sr, sc) {
+      const r = state.boardFlipped ? 7 - sr : sr;
+      const c = state.boardFlipped ? 7 - sc : sc;
+      return { r, c };
+    }
+
+    function drawChessBoard() {
+      const canvas = document.getElementById('chessBoardCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const sq = width / 8;
+      const theme = BOARD_THEMES[state.boardTheme] || BOARD_THEMES.classic;
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, width);
+
+      // Last move coordinates
+      const lastMove = state.currentPly > 0 ? state.moveHistory[state.currentPly - 1] : null;
+
+      // Draw 64 squares
+      for (let sr = 0; sr < 8; sr++) {
+        for (let sc = 0; sc < 8; sc++) {
+          const { r, c } = screenToBoard(sr, sc);
+          const isLight = (r + c) % 2 === 0;
+          ctx.fillStyle = isLight ? theme.light : theme.dark;
+          ctx.fillRect(sc * sq, sr * sq, sq, sq);
+
+          // Highlight last move
+          if (lastMove && ((lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c))) {
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.38)';
+            ctx.fillRect(sc * sq, sr * sq, sq, sq);
+          }
+
+          // Highlight selected square
+          if (state.selectedSquare && state.selectedSquare.r === r && state.selectedSquare.c === c) {
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
+            ctx.fillRect(sc * sq, sr * sq, sq, sq);
+          }
+
+          // Highlight king in check
+          const p = state.engine.board[r][c];
+          if (p && p.type === 'k' && p.color === state.engine.turn && state.engine.inCheck(p.color)) {
+            const grad = ctx.createRadialGradient(
+              sc * sq + sq / 2, sr * sq + sq / 2, sq * 0.1,
+              sc * sq + sq / 2, sr * sq + sq / 2, sq * 0.55
+            );
+            grad.addColorStop(0, 'rgba(239, 68, 68, 0.9)');
+            grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(sc * sq, sr * sq, sq, sq);
+          }
+
+          // Coordinates on edges
+          ctx.font = `600 ${Math.max(9, Math.floor(sq * 0.18))}px Inter, sans-serif`;
+          if (sc === 0) {
+            ctx.fillStyle = isLight ? theme.coordLight : theme.coordDark;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(RANKS[r], sc * sq + 4, sr * sq + 3);
+          }
+          if (sr === 7) {
+            ctx.fillStyle = isLight ? theme.coordLight : theme.coordDark;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(FILES[c], (sc + 1) * sq - 4, (sr + 1) * sq - 3);
+          }
+        }
+      }
+
+      // Draw legal move indicators
+      for (const m of state.legalMovesFromSelected) {
+        const { sr, sc } = boardToScreen(m.to.r, m.to.c);
+        const cx = sc * sq + sq / 2;
+        const cy = sr * sq + sq / 2;
+        ctx.save();
+        if (m.captured) {
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.78)';
+          ctx.lineWidth = Math.max(3, sq * 0.08);
+          ctx.beginPath();
+          ctx.arc(cx, cy, sq * 0.41, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.36)';
+          ctx.beginPath();
+          ctx.arc(cx, cy, sq * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Draw pieces with classic Staunton vector styling (skipping destination square if currently animating)
+      const anim = state.activeAnimation;
+      for (let sr = 0; sr < 8; sr++) {
+        for (let sc = 0; sc < 8; sc++) {
+          const { r, c } = screenToBoard(sr, sc);
+          if (anim && anim.to.r === r && anim.to.c === c) continue;
+          const p = state.engine.board[r][c];
+          if (!p) continue;
+          drawPieceOnSquare(ctx, p, sc * sq, sr * sq, sq);
+        }
+      }
+
+      // Draw smoothly sliding piece during move animation
+      if (anim) {
+        const fromScreen = boardToScreen(anim.from.r, anim.from.c);
+        const toScreen = boardToScreen(anim.to.r, anim.to.c);
+        const curX = (fromScreen.sc + (toScreen.sc - fromScreen.sc) * anim.progress) * sq;
+        const curY = (fromScreen.sr + (toScreen.sr - fromScreen.sr) * anim.progress) * sq;
+        drawPieceOnSquare(ctx, anim.piece, curX, curY, sq);
+      }
+
+      // Draw Guide / Book Move Arrow when in Drill Mode (or when Hint triggered)
+      if (state.mode === 'drill' && state.showGuideArrow) {
+        const seq = getActiveSequence();
+        if (seq && state.currentPly < seq.moves.length) {
+          const expectedSan = seq.moves[state.currentPly];
+          const legal = state.engine.getLegalMoves();
+          const bookMove = legal.find(
+            m => m.san.replace(/[+#!?]+$/g, '') === expectedSan.replace(/[+#!?]+$/g, '') || m.san === expectedSan
+          );
+          if (bookMove) {
+            drawMoveArrow(ctx, bookMove.from, bookMove.to, sq, 'rgba(245, 158, 11, 0.85)');
+          }
+        }
+      }
+
+      ctx.restore();
+    }
+
+    const STAUNTON_PATHS = {
+      p: {
+        body: [
+          'M 22.5,9 C 19.5,9 17,11.5 17,14.5 C 17,16.8 18.4,18.7 20.4,19.5 C 17.5,21.2 16,24.2 16,28.5 C 16,30.5 14.5,32 12.5,33.5 L 32.5,33.5 C 30.5,32 29,30.5 29,28.5 C 29,24.2 27.5,21.2 24.6,19.5 C 26.6,18.7 28,16.8 28,14.5 C 28,11.5 25.5,9 22.5,9 z',
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z'
+        ],
+        details: [
+          'M 16,28.5 L 29,28.5',
+          'M 12.5,33.5 L 32.5,33.5'
+        ]
+      },
+      r: {
+        body: [
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z',
+          'M 13,33 L 32,33 L 30,29.5 L 15,29.5 Z',
+          'M 15.5,29.5 L 16.5,16.5 L 28.5,16.5 L 29.5,29.5 Z',
+          'M 13.5,16.5 L 31.5,16.5 L 31.5,11 L 28,11 L 28,13.5 L 24.5,13.5 L 24.5,11 L 20.5,11 L 20.5,13.5 L 17,13.5 L 17,11 L 13.5,11 Z'
+        ],
+        details: [
+          'M 15,29.5 L 30,29.5',
+          'M 16.5,16.5 L 28.5,16.5'
+        ]
+      },
+      n: {
+        body: [
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z',
+          'M 14,33.5 L 31.5,33.5 C 32,25 31,15.5 23.5,11.5 L 22,9 L 19.5,12 C 15.5,13 12.5,16.5 11.5,21 C 11,23 13,24 14.8,23 C 16.5,22 18.2,20.2 19.5,20.5 C 18.8,24.2 15.2,27.5 14,33.5 Z'
+        ],
+        details: [
+          'M 16.5,16.5 A 1,1 0 1,1 16.5,16.4',
+          'M 24.5,14 C 27.5,17.5 28.5,23.5 28,31'
+        ]
+      },
+      b: {
+        body: [
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z',
+          'M 13.5,33.5 L 31.5,33.5 L 29.5,29.5 L 15.5,29.5 Z',
+          'M 15.5,29.5 C 13,23 14.5,15.5 22.5,11.5 C 30.5,15.5 32,23 29.5,29.5 Z',
+          'M 22.5,7.5 A 2,2 0 1,1 22.49,7.5'
+        ],
+        details: [
+          'M 20,17 L 25,22',
+          'M 25,17 L 20,22',
+          'M 15.5,29.5 L 29.5,29.5'
+        ]
+      },
+      q: {
+        body: [
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z',
+          'M 13,33.5 L 32,33.5 L 30.5,29.5 L 14.5,29.5 Z',
+          'M 14.5,29.5 L 10,15 L 16.8,22.5 L 18.8,13 L 22.5,22 L 26.2,13 L 28.2,22.5 L 35,15 L 30.5,29.5 Z',
+          'M 10,13.5 A 1.5,1.5 0 1,1 9.99,13.5',
+          'M 18.8,11.5 A 1.5,1.5 0 1,1 18.79,11.5',
+          'M 26.2,11.5 A 1.5,1.5 0 1,1 26.19,11.5',
+          'M 35,13.5 A 1.5,1.5 0 1,1 34.99,13.5'
+        ],
+        details: [
+          'M 14.5,29.5 L 30.5,29.5',
+          'M 13.5,32 L 31.5,32'
+        ]
+      },
+      k: {
+        body: [
+          'M 22.5,5.5 L 22.5,11.5',
+          'M 19.5,8.5 L 25.5,8.5',
+          'M 11,36 L 34,36 L 34,39.5 L 11,39.5 Z',
+          'M 13,33.5 L 32,33.5 L 30.5,29.5 L 14.5,29.5 Z',
+          'M 14.5,29.5 C 12,22 14,15 19,15 C 21,15 22,16.5 22.5,17.5 C 23,16.5 24,15 26,15 C 31,15 33,22 30.5,29.5 Z',
+          'M 20,15 C 20,12.5 25,12.5 25,15'
+        ],
+        details: [
+          'M 14.5,29.5 L 30.5,29.5',
+          'M 13.5,32 L 31.5,32',
+          'M 22.5,17.5 L 22.5,28'
+        ]
+      }
+    };
+
+    function drawPieceOnSquare(ctx, piece, x, y, sq) {
+      const def = STAUNTON_PATHS[piece.type];
+      if (!def) return;
+      ctx.save();
+      ctx.translate(x, y);
+      const scale = sq / 45;
+      ctx.scale(scale, scale);
+
+      const isWhite = piece.color === 'w';
+      ctx.fillStyle = isWhite ? '#f8fafc' : '#1e293b';
+      ctx.strokeStyle = isWhite ? '#0f172a' : '#090d16';
+      ctx.lineWidth = 2.1;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // Subtle drop shadow directly under the classic piece silhouette (no circle background)
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+      ctx.shadowBlur = 3.5;
+      ctx.shadowOffsetY = 1.8;
+
+      for (const d of def.body) {
+        const p2d = new Path2D(d);
+        if (d.includes('Z') || d.includes('z') || d.includes('A ')) {
+          ctx.fill(p2d);
+        }
+        ctx.stroke(p2d);
+      }
+
+      // Draw crisp interior Staunton detail lines without shadow
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.strokeStyle = isWhite ? '#1e293b' : '#cbd5e1';
+      ctx.lineWidth = 1.45;
+      for (const d of def.details) {
+        const p2d = new Path2D(d);
+        ctx.stroke(p2d);
+      }
+
+      ctx.restore();
+    }
+
+    function drawMoveArrow(ctx, from, to, sq, color) {
+      const f = boardToScreen(from.r, from.c);
+      const t = boardToScreen(to.r, to.c);
+      const x1 = f.sc * sq + sq / 2;
+      const y1 = f.sr * sq + sq / 2;
+      const x2 = t.sc * sq + sq / 2;
+      const y2 = t.sr * sq + sq / 2;
+
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const headLen = sq * 0.28;
+      const endX = x2 - Math.cos(angle) * (sq * 0.16);
+      const endY = y2 - Math.sin(angle) * (sq * 0.16);
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = Math.max(4, sq * 0.11);
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /*************************************************************************
+     * 6. DRILL PRACTICE, SEQUENCE RECORDING & AI SPARRING FLOWS
+     *************************************************************************/
+    function clearOpponentTimer() {
+      if (state.opponentTimer) {
+        clearTimeout(state.opponentTimer);
+        state.opponentTimer = null;
+      }
+    }
+
+    function selectSequence(seqId) {
+      clearOpponentTimer();
+      state.activeSeqId = seqId;
+      const seq = getActiveSequence();
+      if (!seq) return;
+
+      state.boardFlipped = seq.side === 'b';
+      state.engine = new ChessEngine(START_FEN);
+      state.moveHistory = [];
+      state.currentPly = 0;
+      state.selectedSquare = null;
+      state.legalMovesFromSelected = [];
+      state.customNotes = Object.assign({}, seq.notes || {});
+
+      document.getElementById('saveSequenceTitleInput').value = seq.title;
+      document.getElementById('saveSequenceSideSelect').value = seq.side || 'w';
+
+      if (state.mode === 'record') {
+        // In Record Mode, load the full sequence so the user can inspect or append to it
+        loadFullSequenceIntoHistory(seq);
+      } else {
+        setCoachMessage(
+          `Loaded <strong>${escapeHtml(seq.title)}</strong> (${seq.side === 'w' ? 'White' : 'Black'} perspective). ${
+            seq.notes && seq.notes[0] ? escapeHtml(seq.notes[0]) : 'Make the next book move on the board!'
+          }`,
+          'info'
+        );
+        maybeTriggerOpponentAutoMove();
+      }
+
+      renderAll();
+    }
+
+    function loadFullSequenceIntoHistory(seq) {
+      state.engine = new ChessEngine(START_FEN);
+      state.moveHistory = [];
+      for (let i = 0; i < seq.moves.length; i++) {
+        const m = state.engine.makeMoveBySan(seq.moves[i]);
+        if (!m) break;
+        state.moveHistory.push({
+          san: m.san,
+          from: m.from,
+          to: m.to,
+          fenAfter: state.engine.toFen(),
+          note: (seq.notes && seq.notes[i]) || ''
+        });
+      }
+      state.currentPly = state.moveHistory.length;
+    }
+
+    function attemptBoardMove(fromR, fromC, toR, toC, promoPiece = null) {
+      const legal = state.engine.getLegalMoves();
+      const candidates = legal.filter(
+        m => m.from.r === fromR && m.from.c === fromC && m.to.r === toR && m.to.c === toC
+      );
+      if (candidates.length === 0) return false;
+
+      // Check if promotion choice is needed
+      if (candidates[0].promotion && !promoPiece) {
+        state.pendingPromotion = { fromR, fromC, toR, toC };
+        document.getElementById('promotionOverlay').classList.remove('hidden');
+        return false;
+      }
+
+      const chosenMove = promoPiece
+        ? candidates.find(m => m.promotion === promoPiece) || candidates[0]
+        : candidates[0];
+
+      // In Drill Practice Mode, verify against the active sequence's book move!
+      if (state.mode === 'drill') {
+        const seq = getActiveSequence();
+        if (seq && state.currentPly < seq.moves.length) {
+          const expectedSan = seq.moves[state.currentPly];
+          const isMatch =
+            chosenMove.san.replace(/[+#!?]+$/g, '') === expectedSan.replace(/[+#!?]+$/g, '') ||
+            chosenMove.san === expectedSan;
+
+          state.stats.attempts++;
+          if (!isMatch) {
+            state.stats.streak = 0;
+            persistStats();
+            sound.playError();
+            setCoachMessage(
+              `Not quite! You played <strong>${chosenMove.san}</strong>, but the book move in <em>${escapeHtml(seq.title)}</em> is <strong>${expectedSan}</strong>. Try again or click <strong>Hint</strong>!`,
+              'warn'
+            );
+            state.selectedSquare = null;
+            state.legalMovesFromSelected = [];
+            drawChessBoard();
+            return false;
+          } else {
+            state.stats.correct++;
+            state.stats.streak++;
+            persistStats();
+          }
+        }
+      }
+
+      executeValidatedMove(chosenMove);
+      return true;
+    }
+
+    function animatePieceGlide(moveObj) {
+      if (state.animFrameId) {
+        cancelAnimationFrame(state.animFrameId);
+        state.animFrameId = null;
+      }
+      const duration = 340;
+      const start = performance.now();
+      const movedPiece = moveObj.promotion
+        ? { type: moveObj.promotion, color: moveObj.piece.color }
+        : { type: moveObj.piece.type, color: moveObj.piece.color };
+
+      state.activeAnimation = {
+        piece: movedPiece,
+        from: moveObj.from,
+        to: moveObj.to,
+        progress: 0
+      };
+
+      function step(now) {
+        if (!state.activeAnimation) return;
+        const elapsed = now - start;
+        const t = Math.min(1, elapsed / duration);
+        // Smooth cubic ease-out
+        state.activeAnimation.progress = 1 - Math.pow(1 - t, 3);
+        drawChessBoard();
+        if (t < 1) {
+          state.animFrameId = requestAnimationFrame(step);
+        } else {
+          state.activeAnimation = null;
+          state.animFrameId = null;
+          drawChessBoard();
+        }
+      }
+      state.animFrameId = requestAnimationFrame(step);
+    }
+
+    function executeValidatedMove(moveObj) {
+      clearOpponentTimer();
+      // If we stepped back earlier, truncate future history before pushing new move
+      if (state.currentPly < state.moveHistory.length) {
+        state.moveHistory = state.moveHistory.slice(0, state.currentPly);
+      }
+
+      state.engine.applyMoveUnchecked(moveObj);
+      const isCheck = state.engine.inCheck(state.engine.turn);
+      sound.playMove(!!moveObj.captured, isCheck);
+
+      const seq = getActiveSequence();
+      const plyIndex = state.currentPly;
+      const noteText =
+        state.customNotes[plyIndex] ||
+        (seq && seq.notes && seq.notes[plyIndex]) ||
+        '';
+
+      state.moveHistory.push({
+        san: moveObj.san,
+        from: moveObj.from,
+        to: moveObj.to,
+        fenAfter: state.engine.toFen(),
+        note: noteText
+      });
+      state.currentPly = state.moveHistory.length;
+      state.selectedSquare = null;
+      state.legalMovesFromSelected = [];
+
+      animatePieceGlide(moveObj);
+
+      // Update coach commentary
+      if (state.mode === 'drill' && seq) {
+        if (state.currentPly >= seq.moves.length) {
+          state.stats.completed++;
+          persistStats();
+          sound.playSuccess();
+          setCoachMessage(
+            `🎉 <strong>Sequence Completed!</strong> You mastered all ${seq.moves.length} plies of <em>${escapeHtml(seq.title)}</em>! Click <strong>Restart</strong> to drill again or switch to <strong>Free Play / AI</strong> to continue the game.`,
+            'success'
+          );
+        } else {
+          const noteMsg = noteText
+            ? `<strong>${moveObj.san}:</strong> ${escapeHtml(noteText)}`
+            : `Good move (<strong>${moveObj.san}</strong>)! Keep going through the book line.`;
+          setCoachMessage(noteMsg, 'info');
+          maybeTriggerOpponentAutoMove();
+        }
+      } else if (state.mode === 'record') {
+        setCoachMessage(
+          `Recorded <strong>${moveObj.san}</strong> (ply ${state.currentPly}). Add a coaching note below or click <strong>Save to Library / Save to File Manager</strong> anytime.`,
+          'info'
+        );
+      } else if (state.mode === 'spar') {
+        maybeTriggerAiSparMove();
+      }
+
+      renderAll();
+    }
+
+    function maybeTriggerOpponentAutoMove() {
+      if (state.mode !== 'drill' || !state.autoPlayOpponent) return;
+      const seq = getActiveSequence();
+      if (!seq || state.currentPly >= seq.moves.length) return;
+
+      const isOpponentTurn = state.engine.turn !== seq.side;
+      if (!isOpponentTurn) return;
+
+      clearOpponentTimer();
+      const pill = document.getElementById('turnStatusPill');
+      if (pill) {
+        pill.textContent = `Opponent playing book move...`;
+      }
+      state.opponentTimer = setTimeout(() => {
+        const expectedSan = seq.moves[state.currentPly];
+        const legal = state.engine.getLegalMoves();
+        const bookMove = legal.find(
+          m => m.san.replace(/[+#!?]+$/g, '') === expectedSan.replace(/[+#!?]+$/g, '') || m.san === expectedSan
+        );
+        if (bookMove) {
+          executeValidatedMove(bookMove);
+        }
+      }, 1150);
+    }
+
+    function maybeTriggerAiSparMove() {
+      if (state.mode !== 'spar') return;
+      const seq = getActiveSequence();
+      const playerSide = seq ? seq.side : 'w';
+      if (state.engine.turn === playerSide) return;
+
+      clearOpponentTimer();
+      const pill = document.getElementById('turnStatusPill');
+      if (pill) {
+        pill.textContent = `Bot thinking...`;
+      }
+      state.opponentTimer = setTimeout(() => {
+        const bestMove = pickAiMove(state.engine, state.aiDepth);
+        if (bestMove) {
+          executeValidatedMove(bestMove);
+        }
+      }, 1100);
+    }
+
+    function pickAiMove(engine, depth) {
+      const legal = engine.getLegalMoves();
+      if (legal.length === 0) return null;
+      const maximizing = engine.turn === 'w';
+      let bestMove = legal[0];
+      let bestVal = maximizing ? -9999 : 9999;
+
+      for (const m of legal) {
+        const copy = engine.clone();
+        copy.applyMoveUnchecked(m);
+        const val = minimax(copy, depth - 1, -10000, 10000, !maximizing);
+        // Slight jitter so casual moves vary naturally
+        const jitter = (Math.random() - 0.5) * 0.15;
+        const total = val + jitter;
+        if (maximizing && total > bestVal) {
+          bestVal = total;
+          bestMove = m;
+        } else if (!maximizing && total < bestVal) {
+          bestVal = total;
+          bestMove = m;
+        }
+      }
+      return bestMove;
+    }
+
+    function minimax(engine, depth, alpha, beta, maximizing) {
+      if (depth <= 0) return engine.evaluateMaterial();
+      const legal = engine.getLegalMovesWithoutSan();
+      if (legal.length === 0) {
+        if (engine.inCheck(engine.turn)) {
+          return maximizing ? -900 - depth : 900 + depth;
+        }
+        return 0;
+      }
+      if (maximizing) {
+        let maxEval = -9999;
+        for (const m of legal) {
+          const copy = engine.clone();
+          copy.applyMoveUnchecked(m);
+          const ev = minimax(copy, depth - 1, alpha, beta, false);
+          if (ev > maxEval) maxEval = ev;
+          if (ev > alpha) alpha = ev;
+          if (beta <= alpha) break;
+        }
+        return maxEval;
+      } else {
+        let minEval = 9999;
+        for (const m of legal) {
+          const copy = engine.clone();
+          copy.applyMoveUnchecked(m);
+          const ev = minimax(copy, depth - 1, alpha, beta, true);
+          if (ev < minEval) minEval = ev;
+          if (ev < beta) beta = ev;
+          if (beta <= alpha) break;
+        }
+        return minEval;
+      }
+    }
+
+    function jumpToPly(targetPly) {
+      clearOpponentTimer();
+      const clamped = Math.max(0, Math.min(targetPly, state.moveHistory.length));
+      state.currentPly = clamped;
+      if (clamped === 0) {
+        state.engine = new ChessEngine(START_FEN);
+      } else {
+        state.engine = new ChessEngine(state.moveHistory[clamped - 1].fenAfter);
+      }
+      state.selectedSquare = null;
+      state.legalMovesFromSelected = [];
+      renderAll();
+    }
+
+    /*************************************************************************
+     * 7. OPTIMAL SAVING FORMATS (PGN & JSON) + FILE MANAGER ROUTING
+     *************************************************************************/
+    function sequenceToPgn(seq) {
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+      const headers = [
+        `[Event "${seq.title || 'Opening Practice Sequence'}"]`,
+        `[Site "ChessFlow Studio"]`,
+        `[Date "${dateStr}"]`,
+        `[White "${seq.side === 'w' ? 'Repertoire Player' : 'Opponent'}"]`,
+        `[Black "${seq.side === 'b' ? 'Repertoire Player' : 'Opponent'}"]`,
+        `[Result "*"]`,
+        `[ECO "${(seq.eco || 'C50').split(' ')[0]}"]`,
+        `[Opening "${seq.title || 'Custom Sequence'}"]`
+      ];
+
+      const tokens = [];
+      for (let i = 0; i < seq.moves.length; i++) {
+        if (i % 2 === 0) {
+          tokens.push(`${Math.floor(i / 2) + 1}.`);
+        }
+        tokens.push(seq.moves[i]);
+        const note = seq.notes && seq.notes[i];
+        if (note && note.trim()) {
+          tokens.push(`{ ${note.trim().replace(/[{}]/g, '')} }`);
+        }
+      }
+      tokens.push('*');
+      return headers.join('\n') + '\n\n' + tokens.join(' ') + '\n';
+    }
+
+    function parsePgnToSequence(pgnText, fallbackTitle = 'Imported PGN Sequence') {
+      const titleMatch = pgnText.match(/\[(?:Opening|Event)\s+"([^"]+)"\]/i);
+      const ecoMatch = pgnText.match(/\[ECO\s+"([^"]+)"\]/i);
+      const title = titleMatch ? titleMatch[1] : fallbackTitle;
+      const eco = ecoMatch ? `${ecoMatch[1]} • Imported Sequence` : 'Custom • Imported PGN';
+
+      // Strip header tags
+      const body = pgnText.replace(/\[[^\]]*\]/g, ' ').trim();
+      const notes = {};
+      const moves = [];
+
+      // Tokenize moves and { comments }
+      const regex = /\{([^}]*)\}|([^\s{}]+)/g;
+      let match;
+      while ((match = regex.exec(body)) !== null) {
+        if (match[1] !== undefined) {
+          if (moves.length > 0) {
+            notes[moves.length - 1] = match[1].trim();
+          }
+        } else {
+          const tok = match[2];
+          if (/^\d+\.+$/.test(tok)) continue;
+          if (tok === '*' || tok === '1-0' || tok === '0-1' || tok === '1/2-1/2') continue;
+          const cleaned = tok.replace(/^\d+\.+/, '');
+          if (cleaned) moves.push(cleaned);
+        }
+      }
+
+      // Validate moves through ChessEngine
+      const testEngine = new ChessEngine(START_FEN);
+      const validMoves = [];
+      for (const mSan of moves) {
+        const res = testEngine.makeMoveBySan(mSan);
+        if (!res) break;
+        validMoves.push(res.san);
+      }
+
+      return {
+        id: 'seq-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        title,
+        eco,
+        category: 'Custom',
+        side: 'w',
+        moves: validMoves,
+        notes
+      };
+    }
+
+    async function exportFileToOSFileManager(filename, content, mimeType = 'application/x-chess-pgn') {
+      // 1. Try modern File System Access API (routes directly to native OS File Manager save dialog)
+      if (typeof window.showSaveFilePicker === 'function') {
+        try {
+          const ext = filename.endsWith('.json') ? '.json' : '.pgn';
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [
+              {
+                description: ext === '.json' ? 'ChessFlow Repertoire JSON' : 'Portable Game Notation (PGN)',
+                accept: { [mimeType]: [ext] }
+              }
+            ]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(content);
+          await writable.close();
+          showToast(`Saved "${filename}" via File Manager!`);
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+          // Fall through to standard anchor download if blocked by sandboxed iframe
+        }
+      }
+
+      // 2. Universal fallback download routing to browser/OS Downloads & File Manager
+      const blob = new Blob([content], { type: mimeType + ';charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showToast(`Exported "${filename}" to your File Manager!`);
+    }
+
+    function buildSequenceFromCurrentBoard() {
+      const currentSeq = getActiveSequence();
+      const rawTitle = document.getElementById('saveSequenceTitleInput').value.trim();
+      const side = document.getElementById('saveSequenceSideSelect').value || 'w';
+      const moves =
+        state.moveHistory.length > 0
+          ? state.moveHistory.map(m => m.san)
+          : currentSeq
+          ? currentSeq.moves.slice()
+          : [];
+      const notes = {};
+      state.moveHistory.forEach((m, idx) => {
+        if (m.note) notes[idx] = m.note;
+      });
+      Object.assign(notes, state.customNotes);
+
+      return {
+        id: 'custom-' + Date.now(),
+        title: rawTitle || (currentSeq ? currentSeq.title + ' (Custom)' : 'Custom Gambit Line'),
+        eco: 'Custom • Recorded Sequence',
+        category: 'Custom',
+        side,
+        moves,
+        notes
+      };
+    }
+
+    /*************************************************************************
+     * 8. UI RENDERING & SYNCHRONIZATION
+     *************************************************************************/
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg, icon = '✨') {
+      const banner = document.getElementById('toastBanner');
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastText').textContent = msg;
+      banner.classList.remove('opacity-0', 'translate-y-2');
+      banner.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(banner._hideTimer);
+      banner._hideTimer = setTimeout(() => {
+        banner.classList.add('opacity-0', 'translate-y-2');
+        banner.classList.remove('opacity-100', 'translate-y-0');
+      }, 2800);
+    }
+
+    function setCoachMessage(html, tone = 'info') {
+      const box = document.getElementById('coachFeedbackBox');
+      if (!box) return;
+      box.innerHTML = html;
+      box.className = 'rounded-xl p-3 text-xs leading-relaxed border transition-all ';
+      if (tone === 'warn') {
+        box.className += 'bg-amber-950/40 border-amber-500/40 text-amber-200';
+      } else if (tone === 'success') {
+        box.className += 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200';
+      } else {
+        box.className += 'bg-slate-950/90 border-slate-800/90 text-slate-200';
+      }
+    }
+
+    function updateSavedCountBadge() {
+      const badge = document.getElementById('savedCountBadge');
+      if (badge) badge.textContent = String(state.repertoire.length);
+    }
+
+    function renderTelemetry() {
+      const acc =
+        state.stats.attempts > 0
+          ? Math.round((state.stats.correct / state.stats.attempts) * 100)
+          : 100;
+      document.getElementById('statAccuracy').textContent = acc + '%';
+      document.getElementById('statStreak').textContent = String(state.stats.streak);
+      document.getElementById('statCompleted').textContent = String(state.stats.completed);
+    }
+
+    function renderRepertoireList() {
+      const container = document.getElementById('repertoireListContainer');
+      if (!container) return;
+      const q = state.searchQuery.toLowerCase().trim();
+      const filtered = state.repertoire.filter(item => {
+        if (state.filterCategory === 'Gambit' && item.category !== 'Gambit') return false;
+        if (state.filterCategory === 'White' && item.side !== 'w') return false;
+        if (state.filterCategory === 'Black' && item.side !== 'b') return false;
+        if (state.filterCategory === 'Custom' && item.category !== 'Custom') return false;
+        if (q && !item.title.toLowerCase().includes(q) && !(item.eco || '').toLowerCase().includes(q)) {
+          return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">No matching sequences found.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map(item => {
+          const active = item.id === state.activeSeqId;
+          const sideBadge =
+            item.side === 'w'
+              ? '<span class="px-1.5 py-0.5 rounded bg-white text-slate-950 font-bold text-[10px]">W</span>'
+              : '<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-600 font-bold text-[10px]">B</span>';
+          return `
+            <button type="button" data-seq-id="${escapeHtml(item.id)}" class="seq-select-btn w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
+              active
+                ? 'bg-amber-500/15 border-amber-500/50 text-white shadow'
+                : 'bg-slate-950/60 hover:bg-slate-800/70 border-slate-800/80 text-slate-300'
+            }">
+              <div class="min-w-0">
+                <div class="font-semibold text-xs truncate">${escapeHtml(item.title)}</div>
+                <div class="text-[10px] text-slate-400 truncate">${escapeHtml(item.eco)} • ${item.moves.length} plies</div>
+              </div>
+              ${sideBadge}
+            </button>
+          `;
+        })
+        .join('');
+
+      container.querySelectorAll('.seq-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectSequence(btn.getAttribute('data-seq-id'));
+        });
+      });
+    }
+
+    function renderMoveList() {
+      const container = document.getElementById('moveListContainer');
+      const seq = getActiveSequence();
+      const targetMoves =
+        state.mode === 'drill' && seq
+          ? seq.moves
+          : state.moveHistory.map(m => m.san);
+
+      document.getElementById('plyCounterLabel').textContent = `${state.currentPly} / ${targetMoves.length} plies`;
+
+      if (seq && state.mode === 'drill') {
+        const pct = seq.moves.length > 0 ? Math.min(100, Math.round((state.currentPly / seq.moves.length) * 100)) : 0;
+        document.getElementById('drillProgressBadge').textContent = `Ply ${state.currentPly} / ${seq.moves.length}`;
+        document.getElementById('drillProgressBar').style.width = `${pct}%`;
+      } else {
+        document.getElementById('drillProgressBadge').textContent = `${state.currentPly} Plies`;
+        document.getElementById('drillProgressBar').style.width = '100%';
+      }
+
+      const maxLen = Math.max(state.moveHistory.length, state.mode === 'drill' && seq ? seq.moves.length : 0);
+      if (maxLen === 0) {
+        container.innerHTML = `<div class="text-slate-500 text-xs py-6 text-center">Play moves on the board to build or practice a sequence.</div>`;
+        return;
+      }
+
+      const rows = [];
+      for (let i = 0; i < maxLen; i += 2) {
+        const moveNum = Math.floor(i / 2) + 1;
+        const wPlayed = state.moveHistory[i];
+        const bPlayed = state.moveHistory[i + 1];
+        const wBook = seq && seq.moves[i] ? seq.moves[i] : '';
+        const bBook = seq && seq.moves[i + 1] ? seq.moves[i + 1] : '';
+
+        const wLabel = wPlayed ? wPlayed.san : state.mode === 'drill' ? '•••' : '';
+        const bLabel = bPlayed ? bPlayed.san : state.mode === 'drill' && bBook ? '•••' : '';
+
+        const wActive = state.currentPly === i + 1;
+        const bActive = state.currentPly === i + 2;
+
+        rows.push(`
+          <div class="grid grid-cols-7 items-center px-2 py-1 rounded-lg hover:bg-slate-900/80">
+            <span class="col-span-1 text-slate-500">${moveNum}.</span>
+            <button type="button" data-ply="${i + 1}" class="ply-jump-btn col-span-3 text-left px-2 py-0.5 rounded ${
+              wActive ? 'bg-amber-500/25 text-amber-300 font-bold' : wPlayed ? 'text-slate-200 hover:text-white' : 'text-slate-600 cursor-default'
+            }">${escapeHtml(wLabel)}</button>
+            <button type="button" data-ply="${i + 2}" class="ply-jump-btn col-span-3 text-left px-2 py-0.5 rounded ${
+              bActive ? 'bg-amber-500/25 text-amber-300 font-bold' : bPlayed ? 'text-slate-200 hover:text-white' : 'text-slate-600 cursor-default'
+            }">${escapeHtml(bLabel)}</button>
+          </div>
+        `);
+      }
+      container.innerHTML = rows.join('');
+
+      container.querySelectorAll('.ply-jump-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const ply = parseInt(btn.getAttribute('data-ply'), 10);
+          if (ply <= state.moveHistory.length) {
+            jumpToPly(ply);
+          }
+        });
+      });
+
+      // Populate note input for current ply
+      const currentNote =
+        state.currentPly > 0 && state.moveHistory[state.currentPly - 1]
+          ? state.moveHistory[state.currentPly - 1].note || ''
+          : '';
+      document.getElementById('moveNoteInput').value = currentNote;
+    }
+
+    function renderHeaderAndEval() {
+      const seq = getActiveSequence();
+      if (seq) {
+        document.getElementById('activeOpeningTitle').textContent = seq.title;
+        document.getElementById('activeOpeningEco').textContent = `${seq.eco} • ${seq.moves.length} book plies`;
+        const badge = document.getElementById('activeSideBadge');
+        if (seq.side === 'w') {
+          badge.textContent = 'White';
+          badge.className = 'px-2 py-1 rounded-lg text-xs font-bold bg-white text-slate-950 shadow-sm shrink-0';
+        } else {
+          badge.textContent = 'Black';
+          badge.className = 'px-2 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-100 border border-slate-600 shadow-sm shrink-0';
+        }
+      }
+
+      const pill = document.getElementById('turnStatusPill');
+      const legal = state.engine.getLegalMovesWithoutSan();
+      if (legal.length === 0) {
+        if (state.engine.inCheck(state.engine.turn)) {
+          pill.textContent = `Checkmate! ${state.engine.turn === 'w' ? 'Black' : 'White'} wins`;
+          pill.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        } else {
+          pill.textContent = 'Stalemate / Draw';
+          pill.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300';
+        }
+      } else if (state.engine.inCheck(state.engine.turn)) {
+        pill.textContent = `${state.engine.turn === 'w' ? 'White' : 'Black'} in Check!`;
+        pill.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      } else {
+        pill.textContent = `${state.engine.turn === 'w' ? 'White' : 'Black'} to move`;
+        pill.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30';
+      }
+
+      // Update evaluation bar
+      const score = state.engine.evaluateMaterial();
+      const whitePct = Math.max(8, Math.min(92, 50 + score * 6));
+      document.getElementById('evalBarBlack').style.height = `${100 - whitePct}%`;
+    }
+
+    function renderFileManagerModal() {
+      const tbody = document.getElementById('fileManagerTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = state.repertoire
+        .map(seq => {
+          const preview = seq.moves.slice(0, 8).join(' ') + (seq.moves.length > 8 ? ' ...' : '');
+          return `
+            <tr class="hover:bg-slate-800/50 transition">
+              <td class="py-2.5 px-3 font-semibold text-white">${escapeHtml(seq.title)}</td>
+              <td class="py-2.5 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${
+                  seq.side === 'w' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-200 border border-slate-600'
+                }">${seq.side === 'w' ? 'White' : 'Black'}</span>
+              </td>
+              <td class="py-2.5 px-3 font-mono text-slate-400">${escapeHtml(preview)}</td>
+              <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                <button type="button" data-load-id="${escapeHtml(seq.id)}" class="fm-load-btn px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold mr-1">Practice</button>
+                <button type="button" data-export-id="${escapeHtml(seq.id)}" class="fm-export-btn px-2 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-semibold mr-1">Save File</button>
+                <button type="button" data-delete-id="${escapeHtml(seq.id)}" class="fm-delete-btn px-2 py-1 rounded bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 font-semibold">✕</button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      tbody.querySelectorAll('.fm-load-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectSequence(btn.getAttribute('data-load-id'));
+          document.getElementById('fileManagerModal').classList.add('hidden');
+          showToast('Loaded sequence onto board!');
+        });
+      });
+
+      tbody.querySelectorAll('.fm-export-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const seq = state.repertoire.find(s => s.id === btn.getAttribute('data-export-id'));
+          if (!seq) return;
+          const fmt = document.getElementById('exportFormatSelect').value;
+          const slug = seq.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sequence';
+          if (fmt === 'json') {
+            exportFileToOSFileManager(`${slug}.chessrep.json`, JSON.stringify(seq, null, 2), 'application/json');
+          } else {
+            exportFileToOSFileManager(`${slug}.pgn`, sequenceToPgn(seq), 'application/x-chess-pgn');
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.fm-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (state.repertoire.length <= 1) {
+            showToast('At least one sequence must remain in library.', '⚠️');
+            return;
+          }
+          const id = btn.getAttribute('data-delete-id');
+          state.repertoire = state.repertoire.filter(s => s.id !== id);
+          if (state.activeSeqId === id) {
+            state.activeSeqId = state.repertoire[0].id;
+          }
+          persistRepertoire();
+          renderFileManagerModal();
+          renderAll();
+          showToast('Sequence removed from library.');
+        });
+      });
+
+      // Populate inspector with active sequence PGN
+      const activeSeq = getActiveSequence();
+      if (activeSeq) {
+        document.getElementById('pgnInspectorTextarea').value = sequenceToPgn(activeSeq);
+      }
+    }
+
+    function renderModeButtons() {
+      const modes = [
+        { id: 'modeDrillBtn', key: 'drill' },
+        { id: 'modeRecordBtn', key: 'record' },
+        { id: 'modeSparBtn', key: 'spar' }
+      ];
+      modes.forEach(m => {
+        const el = document.getElementById(m.id);
+        if (state.mode === m.key) {
+          el.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-amber-500 text-slate-950 shadow';
+        } else {
+          el.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-300 hover:text-white';
+        }
+      });
+
+      const aiBar = document.getElementById('aiSparringBar');
+      if (state.mode === 'spar') aiBar.classList.remove('hidden');
+      else aiBar.classList.add('hidden');
+    }
+
+    function renderAll() {
+      renderModeButtons();
+      renderRepertoireList();
+      renderHeaderAndEval();
+      renderMoveList();
+      renderTelemetry();
+      updateSavedCountBadge();
+      drawChessBoard();
+    }
+
+    /*************************************************************************
+     * 9. EVENT LISTENERS (MOUSE, TOUCH, KEYBOARD, FILE MANAGER)
+     *************************************************************************/
+    function handleSquareInteraction(r, c) {
+      if (state.selectedSquare) {
+        if (state.selectedSquare.r === r && state.selectedSquare.c === c) {
+          state.selectedSquare = null;
+          state.legalMovesFromSelected = [];
+          drawChessBoard();
+          return;
+        }
+        const moved = attemptBoardMove(state.selectedSquare.r, state.selectedSquare.c, r, c);
+        if (moved) return;
+      }
+
+      const piece = state.engine.board[r][c];
+      if (piece && piece.color === state.engine.turn) {
+        state.selectedSquare = { r, c };
+        const allLegal = state.engine.getLegalMoves();
+        state.legalMovesFromSelected = allLegal.filter(m => m.from.r === r && m.from.c === c);
+      } else {
+        state.selectedSquare = null;
+        state.legalMovesFromSelected = [];
+      }
+      drawChessBoard();
+    }
+
+    function bindEvents() {
+      const canvas = document.getElementById('chessBoardCanvas');
+
+      function getCoordsFromClientEvent(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const sc = Math.max(0, Math.min(7, Math.floor((x / rect.width) * 8)));
+        const sr = Math.max(0, Math.min(7, Math.floor((y / rect.height) * 8)));
+        return screenToBoard(sr, sc);
+      }
+
+      canvas.addEventListener('mousedown', e => {
+        const { r, c } = getCoordsFromClientEvent(e.clientX, e.clientY);
+        handleSquareInteraction(r, c);
+      });
+
+      canvas.addEventListener(
+        'touchstart',
+        e => {
+          if (e.touches && e.touches.length > 0) {
+            e.preventDefault();
+            const t = e.touches[0];
+            const { r, c } = getCoordsFromClientEvent(t.clientX, t.clientY);
+            handleSquareInteraction(r, c);
+          }
+        },
+        { passive: false }
+      );
+
+      // Promotion picker buttons
+      document.querySelectorAll('.promo-choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const promo = btn.getAttribute('data-promo');
+          document.getElementById('promotionOverlay').classList.add('hidden');
+          if (state.pendingPromotion) {
+            const { fromR, fromC, toR, toC } = state.pendingPromotion;
+            state.pendingPromotion = null;
+            attemptBoardMove(fromR, fromC, toR, toC, promo);
+          }
+        });
+      });
+
+      // Mode switchers
+      document.getElementById('modeDrillBtn').addEventListener('click', () => {
+        state.mode = 'drill';
+        selectSequence(state.activeSeqId);
+        showToast('Switched to Guided Drill Practice Mode');
+      });
+
+      document.getElementById('modeRecordBtn').addEventListener('click', () => {
+        state.mode = 'record';
+        clearOpponentTimer();
+        setCoachMessage(
+          '<strong>Sequence Recorder Active:</strong> Play moves on the board for both White and Black, add move notes, and click <strong>Save to Library</strong> or <strong>Save to File Manager</strong>.',
+          'info'
+        );
+        renderAll();
+        showToast('Switched to Sequence Record Mode');
+      });
+
+      document.getElementById('modeSparBtn').addEventListener('click', () => {
+        state.mode = 'spar';
+        clearOpponentTimer();
+        setCoachMessage(
+          '<strong>AI Sparring Active:</strong> Test this opening position against the built-in tactical engine!',
+          'info'
+        );
+        renderAll();
+        maybeTriggerAiSparMove();
+        showToast('Switched to Free Play / AI Mode');
+      });
+
+      // Transport Controls
+      document.getElementById('stepStartBtn').addEventListener('click', () => jumpToPly(0));
+      document.getElementById('stepBackBtn').addEventListener('click', () => jumpToPly(state.currentPly - 1));
+      document.getElementById('stepForwardBtn').addEventListener('click', () => jumpToPly(state.currentPly + 1));
+      document.getElementById('stepEndBtn').addEventListener('click', () => jumpToPly(state.moveHistory.length));
+
+      document.getElementById('hintMoveBtn').addEventListener('click', () => {
+        state.showGuideArrow = true;
+        document.getElementById('toggleGuideArrowBtn').textContent = 'ON';
+        const seq = getActiveSequence();
+        if (seq && state.currentPly < seq.moves.length) {
+          const nextSan = seq.moves[state.currentPly];
+          const note = (seq.notes && seq.notes[state.currentPly]) || 'Follow the golden arrow on the board!';
+          setCoachMessage(`💡 <strong>Book Hint:</strong> Play <strong>${nextSan}</strong> — ${escapeHtml(note)}`, 'info');
+        } else {
+          const best = pickAiMove(state.engine, 2);
+          if (best) {
+            setCoachMessage(`💡 <strong>Engine Suggestion:</strong> Try <strong>${best.san}</strong> (${best.fromAlg} → ${best.toAlg}).`, 'info');
+          }
+        }
+        drawChessBoard();
+      });
+
+      document.getElementById('playBookMoveBtn').addEventListener('click', () => {
+        const seq = getActiveSequence();
+        if (seq && state.currentPly < seq.moves.length) {
+          const expectedSan = seq.moves[state.currentPly];
+          const legal = state.engine.getLegalMoves();
+          const bookMove = legal.find(
+            m => m.san.replace(/[+#!?]+$/g, '') === expectedSan.replace(/[+#!?]+$/g, '') || m.san === expectedSan
+          );
+          if (bookMove) {
+            executeValidatedMove(bookMove);
+            return;
+          }
+        }
+        const fallback = pickAiMove(state.engine, 2);
+        if (fallback) executeValidatedMove(fallback);
+      });
+
+      document.getElementById('flipBoardBtn').addEventListener('click', () => {
+        state.boardFlipped = !state.boardFlipped;
+        drawChessBoard();
+      });
+
+      document.getElementById('restartLineBtn').addEventListener('click', () => {
+        selectSequence(state.activeSeqId);
+        showToast('Sequence reset to move 1');
+      });
+
+      // Repertoire search & filters
+      document.getElementById('repertoireSearchInput').addEventListener('input', e => {
+        state.searchQuery = e.target.value;
+        renderRepertoireList();
+      });
+
+      document.querySelectorAll('.rep-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.filterCategory = btn.getAttribute('data-filter');
+          document.querySelectorAll('.rep-filter-btn').forEach(b => {
+            b.className = 'rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-800/70 text-slate-400 hover:text-slate-200 whitespace-nowrap';
+          });
+          btn.className = 'rep-filter-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap';
+          renderRepertoireList();
+        });
+      });
+
+      document.getElementById('newSequenceBtn').addEventListener('click', () => {
+        state.mode = 'record';
+        state.engine = new ChessEngine(START_FEN);
+        state.moveHistory = [];
+        state.currentPly = 0;
+        state.customNotes = {};
+        document.getElementById('saveSequenceTitleInput').value = 'New Custom Gambit';
+        setCoachMessage('Started a blank board in <strong>Record Mode</strong>. Make moves for White & Black, then save!', 'info');
+        renderAll();
+      });
+
+      // Settings & Toggles
+      document.getElementById('boardThemeSelect').addEventListener('change', e => {
+        state.boardTheme = e.target.value;
+        drawChessBoard();
+      });
+
+      document.getElementById('toggleGuideArrowBtn').addEventListener('click', e => {
+        state.showGuideArrow = !state.showGuideArrow;
+        e.currentTarget.textContent = state.showGuideArrow ? 'ON' : 'OFF';
+        drawChessBoard();
+      });
+
+      document.getElementById('toggleAutoOpponentBtn').addEventListener('click', e => {
+        state.autoPlayOpponent = !state.autoPlayOpponent;
+        e.currentTarget.textContent = state.autoPlayOpponent ? 'ON' : 'OFF';
+        if (state.autoPlayOpponent) maybeTriggerOpponentAutoMove();
+      });
+
+      document.getElementById('resetStatsBtn').addEventListener('click', () => {
+        state.stats = { attempts: 0, correct: 0, streak: 0, completed: 0 };
+        persistStats();
+        showToast('Practice statistics reset');
+      });
+
+      document.getElementById('soundToggleBtn').addEventListener('click', () => {
+        sound.muted = !sound.muted;
+        document.getElementById('soundIcon').textContent = sound.muted ? '🔇' : '🔊';
+        showToast(sound.muted ? 'Audio muted' : 'Synthesized chess audio enabled');
+      });
+
+      // AI strength buttons
+      document.querySelectorAll('.ai-lvl-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.aiDepth = parseInt(btn.getAttribute('data-depth'), 10);
+          document.querySelectorAll('.ai-lvl-btn').forEach(b => {
+            b.className = 'ai-lvl-btn px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px]';
+          });
+          btn.className = 'ai-lvl-btn px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-semibold';
+        });
+      });
+
+      // Move Note saving
+      document.getElementById('saveMoveNoteBtn').addEventListener('click', () => {
+        if (state.currentPly === 0) {
+          showToast('Play a move first before attaching a note!', '⚠️');
+          return;
+        }
+        const val = document.getElementById('moveNoteInput').value.trim();
+        state.customNotes[state.currentPly - 1] = val;
+        if (state.moveHistory[state.currentPly - 1]) {
+          state.moveHistory[state.currentPly - 1].note = val;
+        }
+        const seq = getActiveSequence();
+        if (seq) {
+          seq.notes = seq.notes || {};
+          seq.notes[state.currentPly - 1] = val;
+          persistRepertoire();
+        }
+        showToast('Coaching note saved for ply ' + state.currentPly);
+      });
+
+      // Save to Library & Save to File Manager
+      document.getElementById('saveToLibraryBtn').addEventListener('click', () => {
+        const newSeq = buildSequenceFromCurrentBoard();
+        if (newSeq.moves.length === 0) {
+          showToast('Make at least 1 move on the board to save a sequence!', '⚠️');
+          return;
+        }
+        state.repertoire.unshift(newSeq);
+        state.activeSeqId = newSeq.id;
+        persistRepertoire();
+        renderAll();
+        showToast(`Saved "${newSeq.title}" (${newSeq.moves.length} plies) to Library!`);
+      });
+
+      function triggerDirectExport() {
+        const seq = buildSequenceFromCurrentBoard();
+        if (seq.moves.length === 0) {
+          showToast('No moves to export yet!', '⚠️');
+          return;
+        }
+        const fmt = document.getElementById('exportFormatSelect').value || 'pgn';
+        const slug = seq.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'chess-sequence';
+        if (fmt === 'json') {
+          exportFileToOSFileManager(`${slug}.chessrep.json`, JSON.stringify(seq, null, 2), 'application/json');
+        } else {
+          exportFileToOSFileManager(`${slug}.pgn`, sequenceToPgn(seq), 'application/x-chess-pgn');
+        }
+      }
+
+      document.getElementById('saveToFilePickerBtn').addEventListener('click', triggerDirectExport);
+      document.getElementById('quickSaveFileBtn').addEventListener('click', triggerDirectExport);
+
+      // Copy PGN with fallback
+      document.getElementById('copyPgnBtn').addEventListener('click', () => {
+        const seq = buildSequenceFromCurrentBoard();
+        const pgn = sequenceToPgn(seq);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(pgn).then(
+            () => showToast('PGN copied to clipboard!'),
+            () => fallbackCopyText(pgn)
+          );
+        } else {
+          fallbackCopyText(pgn);
+        }
+      });
+
+      function fallbackCopyText(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('PGN copied to clipboard!');
+        } catch (e) {}
+        document.body.removeChild(ta);
+      }
+
+      // File Manager Modal & File Input Import
+      document.getElementById('openFileManagerBtn').addEventListener('click', () => {
+        renderFileManagerModal();
+        document.getElementById('fileManagerModal').classList.remove('hidden');
+      });
+
+      document.getElementById('closeFileManagerBtn').addEventListener('click', () => {
+        document.getElementById('fileManagerModal').classList.add('hidden');
+      });
+
+      const fileInput = document.getElementById('hiddenFileInput');
+      document.getElementById('importFromFileBtn').addEventListener('click', () => fileInput.click());
+      document.getElementById('modalImportFileBtn').addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const text = String(ev.target.result || '');
+          try {
+            if (file.name.endsWith('.json')) {
+              const parsed = JSON.parse(text);
+              if (Array.isArray(parsed)) {
+                state.repertoire = parsed.concat(state.repertoire);
+                state.activeSeqId = state.repertoire[0].id;
+              } else if (parsed && Array.isArray(parsed.moves)) {
+                parsed.id = 'imp-' + Date.now();
+                state.repertoire.unshift(parsed);
+                state.activeSeqId = parsed.id;
+              }
+            } else {
+              const seq = parsePgnToSequence(text, file.name.replace(/\.(pgn|txt)$/i, ''));
+              if (seq.moves.length > 0) {
+                state.repertoire.unshift(seq);
+                state.activeSeqId = seq.id;
+              } else {
+                showToast('Could not parse legal moves from file.', '⚠️');
+                return;
+              }
+            }
+            persistRepertoire();
+            selectSequence(state.activeSeqId);
+            renderFileManagerModal();
+            showToast(`Imported "${file.name}" into Repertoire Library!`);
+          } catch (err) {
+            showToast('Invalid PGN or JSON file format.', '⚠️');
+          }
+        };
+        reader.readAsText(file);
+        fileInput.value = '';
+      });
+
+      document.getElementById('modalExportAllBtn').addEventListener('click', () => {
+        exportFileToOSFileManager(
+          'chessflow-full-repertoire.chessrep.json',
+          JSON.stringify(state.repertoire, null, 2),
+          'application/json'
+        );
+      });
+
+      document.getElementById('loadPgnTextBtn').addEventListener('click', () => {
+        const txt = document.getElementById('pgnInspectorTextarea').value.trim();
+        if (!txt) return;
+        const seq = parsePgnToSequence(txt, 'Imported PGN Line');
+        if (seq.moves.length === 0) {
+          showToast('No valid chess moves found in PGN text.', '⚠️');
+          return;
+        }
+        state.repertoire.unshift(seq);
+        state.activeSeqId = seq.id;
+        persistRepertoire();
+        selectSequence(seq.id);
+        document.getElementById('fileManagerModal').classList.add('hidden');
+        showToast(`Imported ${seq.moves.length} plies from PGN text!`);
+      });
+
+      // Keyboard navigation for move stepping
+      window.addEventListener('keydown', e => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement && document.activeElement.tagName)) {
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          jumpToPly(state.currentPly - 1);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          jumpToPly(state.currentPly + 1);
+        }
+      });
+
+      window.addEventListener('resize', resizeAndDrawBoard);
+    }
+
+    window.onload = function () {
+      loadSavedState();
+      bindEvents();
+      selectSequence(state.activeSeqId);
+      resizeAndDrawBoard();
+    };
+  </script>
+</body>
+</html>
