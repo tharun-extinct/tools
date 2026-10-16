@@ -12,3 +12,13 @@
 
 
 [AI Background Remover](background_remover_app.html)
+
+
+
+
+## Notes
+
+
+```
+localStorage.clear(); sessionStorage.clear(); location.reload();
+```
