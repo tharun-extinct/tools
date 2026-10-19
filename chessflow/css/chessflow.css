@@ -67,3 +67,46 @@ body[data-page="studio"] select:focus-visible {
     justify-content: flex-end;
   }
 }
+
+/* Overlay navigation leaves the board in place while it slides in and out. */
+#studioNavbar {
+  position: fixed;
+  inset: 0 0 auto;
+  transform: translateY(-100%);
+  transition: transform 220ms ease;
+  pointer-events: none;
+}
+#studioNavbar.is-revealed {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+#studioNavReveal {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 16px;
+  min-height: 16px;
+  z-index: 31;
+  border: 0;
+  border-radius: 0 0 8px 8px;
+  background: transparent;
+}
+#studioNavReveal span {
+  display: block;
+  margin: auto;
+  width: 32px;
+  height: 3px;
+  border-radius: 3px;
+  background: #94a3b8;
+  opacity: 0;
+}
+#studioNavReveal:focus-visible span { opacity: 1; }
+@media (hover: none) {
+  #studioNavReveal { background: #0f172a; }
+  #studioNavReveal span { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #studioNavbar { transition: none; }
+}

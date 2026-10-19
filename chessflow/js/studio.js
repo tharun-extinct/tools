@@ -267,7 +267,53 @@ function bindStudioEvents() {
   window.addEventListener('resize', resizeAndDrawBoard);
 }
 
+// Reveal on entering the top edge; pointer motion elsewhere does not extend the delay.
+function bindRetractableNavbar() {
+  const navbar = document.getElementById('studioNavbar');
+  const reveal = document.getElementById('studioNavReveal');
+  let hideTimer;
+  let atTop = false;
+  let keyboardFocus = false;
+  const hide = () => {
+    if (keyboardFocus && navbar.contains(document.activeElement)) return;
+    navbar.classList.remove('is-revealed');
+    reveal.setAttribute('aria-expanded', 'false');
+  };
+  const show = () => {
+    clearTimeout(hideTimer);
+    navbar.classList.add('is-revealed');
+    reveal.setAttribute('aria-expanded', 'true');
+    hideTimer = setTimeout(hide, 3500);
+  };
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    const withinTop = event.clientY <= 12;
+    if (withinTop && !atTop) show();
+    atTop = withinTop;
+  });
+  document.documentElement.addEventListener('pointerleave', () => { atTop = false; });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Tab') keyboardFocus = true;
+    if (event.key === 'Escape') {
+      if (navbar.contains(document.activeElement)) document.activeElement.blur();
+      keyboardFocus = false;
+      clearTimeout(hideTimer);
+      hide();
+    }
+  });
+  document.addEventListener('pointerdown', () => { keyboardFocus = false; });
+  reveal.addEventListener('click', show);
+  reveal.addEventListener('focus', show);
+  navbar.addEventListener('focusin', show);
+  navbar.addEventListener('focusout', () => {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hide, 3500);
+  });
+  navbar.addEventListener('click', show);
+}
+
 window.addEventListener('load', () => {
+  bindRetractableNavbar();
   loadSavedState();
   const restored = restorePageSession();
   const params = new URLSearchParams(location.search);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChessFlow Studio — Chess Opening & Gambit Sequence Trainer</title>
+  <title>ChessFlow — Chess Opening & Gambit Sequence Trainer</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +13,9 @@
 </head>
 <body data-page="studio" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
 
-  <!-- Clean Minimal Top Navigation Header -->
-  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-30">
+  <!-- Top-edge reveal also provides a keyboard and touch target. -->
+  <button id="studioNavReveal" type="button" aria-label="Show navigation" aria-controls="studioNavbar" aria-expanded="false"><span aria-hidden="true"></span></button>
+  <header id="studioNavbar" class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur z-30">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
       <!-- Brand + Back to Home Button -->
       <div class="flex items-center gap-3">
@@ -24,7 +25,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-300 transition-colors">ChessFlow Studio</h1>
+              <h1 class="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-300 transition-colors">ChessFlow</h1>
             </div>
           </div>
         </button>
