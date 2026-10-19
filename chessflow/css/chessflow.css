@@ -21,3 +21,49 @@ canvas {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* Home controls remain easy to target on touch screens and with a keyboard. */
+body[data-page="home"] button {
+  min-height: 44px;
+}
+body[data-page="home"] button:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 4px;
+}
+@media (max-width: 400px) {
+  body[data-page="home"] header > div {
+    flex-wrap: wrap;
+  }
+  body[data-page="home"] header > div > :last-child {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Keep Studio controls usable as the board and sidebar stack on small screens. */
+body[data-page="studio"] button {
+  min-height: 40px;
+}
+body[data-page="studio"] button:focus-visible,
+body[data-page="studio"] input:focus-visible,
+body[data-page="studio"] select:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 3px;
+}
+#studioWorkspaceView > section {
+  min-width: 0;
+}
+#sidebarPanelSave input,
+#sidebarPanelSave select {
+  min-width: 0;
+  min-height: 44px;
+}
+@media (max-width: 639px) {
+  body[data-page="studio"] header > div {
+    flex-wrap: wrap;
+  }
+  body[data-page="studio"] header > div > :last-child {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

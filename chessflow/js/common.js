@@ -23,7 +23,7 @@ function bindCommonEvents() {
   document.getElementById('quickSaveFileBtn').addEventListener('click', triggerDirectExport);
   document.getElementById('saveToFilePickerBtn')?.addEventListener('click', triggerDirectExport);
   document.getElementById('brandHomeBtn').addEventListener('click', showHomeScreen);
-  document.getElementById('backToHomeBtn').addEventListener('click', showHomeScreen);
+  document.getElementById('backToHomeBtn')?.addEventListener('click', showHomeScreen);
   // File Manager Modal & File Input Import
   document.getElementById('openFileManagerBtn').addEventListener('click', () => {
     renderFileManagerModal();

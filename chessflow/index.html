@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChessFlow Studio — Chess Opening & Gambit Sequence Trainer</title>
+  <title>ChessFlow — Chess Opening & Gambit Sequence Trainer</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,8 +24,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-300 transition-colors">ChessFlow Studio</h1>
-              <span class="hidden md:inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Repertoire Trainer</span>
+              <h1 class="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-300 transition-colors">ChessFlow</h1>
             </div>
           </div>
         </button>
@@ -46,36 +45,30 @@
       <div class="flex items-center gap-2">
         <button id="openFileManagerBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition-all">
           <span>📁</span>
-          <span>Sequence Files</span>
+          <span>Library</span>
           <span id="savedCountBadge" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px]">9</span>
         </button>
-        <button id="quickSaveFileBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Export active sequence to OS File Manager">
+        <button id="quickSaveFileBtn" type="button" aria-label="Export active sequence" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Export active sequence to OS File Manager">
           <span>💾</span>
           <span class="hidden sm:inline">Export File</span>
         </button>
-        <button id="soundToggleBtn" type="button" class="p-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Toggle synthesized chess audio">
+        <button id="soundToggleBtn" type="button" aria-label="Toggle chess audio" class="p-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Toggle synthesized chess audio">
           <span id="soundIcon">🔊</span>
         </button>
       </div>
     </div>
   </header>
 
-  <section id="homeScreenView" class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-center gap-8">
+  <section id="homeScreenView" class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col gap-6 sm:gap-8">
     <!-- Hero Welcome Header -->
-    <div class="text-center max-w-2xl mx-auto flex flex-col items-center gap-3">
-      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-        Interactive Chess Opening &amp; Gambit Trainer
-      </span>
+    <div class="text-center max-w-2xl mx-auto pt-2 sm:pt-6">
       <h2 class="text-2xl sm:text-4xl font-bold tracking-tight text-white">
-        How would you like to train today?
+        Choose your training
       </h2>
-      <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-        Choose a mode below to launch a distraction-free board workspace. Your selected repertoire line is ready to go.
-      </p>
     </div>
 
     <!-- Primary 3 Mode Cards on Home Page -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5" role="tablist">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5" aria-label="Training modes">
       <!-- Mode Card 1: Drill Practice -->
       <div class="bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 flex flex-col justify-between gap-5 shadow-xl transition-all group">
         <div class="flex flex-col gap-3">
@@ -84,16 +77,15 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-base font-bold text-white">Guided Drill Practice</h3>
-              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">Popular</span>
+              <h3 class="text-base font-bold text-white">Drill practice</h3>
             </div>
             <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-              Master book openings and sharp gambits move-by-move with visual hint arrows, coach feedback, and auto-responding opponent moves.
+              Learn an opening move by move with hints and coach feedback.
             </p>
           </div>
         </div>
         <button id="modeDrillBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/15">
-          🎯 Drill Practice
+          Start drill →
         </button>
       </div>
 
@@ -104,14 +96,14 @@
             ⏺️
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Record Custom Sequence</h3>
+            <h3 class="text-base font-bold text-white">Record a sequence</h3>
             <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-              Play moves for both White and Black on the board, attach tactical coaching notes, and save to your Library or OS File Manager (`.pgn` / `.json`).
+              Build your own line, add notes, and save it to your library.
             </p>
           </div>
         </div>
         <button id="modeRecordBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-100 border border-slate-700">
-          ⏺️ Record Sequence
+          Open recorder →
         </button>
       </div>
 
@@ -122,26 +114,26 @@
             ⚔️
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Free Play / AI Sparring</h3>
+            <h3 class="text-base font-bold text-white">Play against AI</h3>
             <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-              Test your understanding of any opening position by playing it out against the built-in tactical chess engine at Casual, Club, or Master strength.
+              Try your opening against an opponent at your preferred strength.
             </p>
           </div>
         </div>
         <button id="modeSparBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-100 border border-slate-700">
-          ⚔️ Free Play / AI
+          Play AI →
         </button>
       </div>
     </div>
 
     <!-- Active Sequence Summary & Quick Picker Bar on Home Page -->
     <div class="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-      <div class="flex items-center gap-3.5 min-w-0">
+      <div class="flex items-center gap-3.5 min-w-0 max-w-full">
         <div class="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-lg shrink-0">
           📖
         </div>
         <div class="min-w-0">
-          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active Opening Sequence</div>
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Selected opening</div>
           <div id="homeActiveSeqTitle" class="text-sm font-bold text-white truncate">Italian Gambit (Main Tactical Line)</div>
           <div id="homeActiveSeqMeta" class="text-xs text-slate-400 truncate">C50 • Sharp Center Sacrifice • 15 plies</div>
         </div>
@@ -149,10 +141,10 @@
 
       <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
         <button id="homeBrowseOpeningsBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-slate-700 transition">
-          📚 Browse All Openings
+          Change opening
         </button>
         <button id="homeQuickStartBtn" type="button" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow transition">
-          ▶ Start Practice Now
+          Start practice →
         </button>
       </div>
     </div>
@@ -172,7 +164,7 @@
           </h2>
           <p class="text-xs text-slate-400">Manage saved opening sequences, export to your OS File Manager (`.pgn` or `.chessrep.json`), or import external files.</p>
         </div>
-        <button id="closeFileManagerBtn" type="button" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold">✕</button>
+        <button id="closeFileManagerBtn" type="button" aria-label="Close library" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold">✕</button>
       </div>
 
       <!-- Modal Body -->
