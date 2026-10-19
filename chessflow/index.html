@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChessFlow Studio — Chess Opening & Gambit Sequence Trainer</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="css/chessflow.css">
+</head>
+<body data-page="home" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
+
+  <!-- Clean Minimal Top Navigation Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <!-- Brand + Back to Home Button -->
+      <div class="flex items-center gap-3">
+        <button id="brandHomeBtn" type="button" class="flex items-center gap-2.5 text-left group focus:outline-none" title="Go to Home Page">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+            ♞
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-300 transition-colors">ChessFlow Studio</h1>
+              <span class="hidden md:inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Repertoire Trainer</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Back to Home & Active Mode Pill (Visible inside Studio View) -->
+        <div id="studioNavBreadcrumb" class="hidden items-center gap-2 pl-2 border-l border-slate-800">
+          <button id="backToHomeBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+            <span>←</span>
+            <span>Home</span>
+          </button>
+          <span id="headerActiveModeBadge" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            🎯 Drill Practice
+          </span>
+        </div>
+      </div>
+
+      <!-- Global Utility Controls -->
+      <div class="flex items-center gap-2">
+        <button id="openFileManagerBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition-all">
+          <span>📁</span>
+          <span>Sequence Files</span>
+          <span id="savedCountBadge" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px]">9</span>
+        </button>
+        <button id="quickSaveFileBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Export active sequence to OS File Manager">
+          <span>💾</span>
+          <span class="hidden sm:inline">Export File</span>
+        </button>
+        <button id="soundToggleBtn" type="button" class="p-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Toggle synthesized chess audio">
+          <span id="soundIcon">🔊</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section id="homeScreenView" class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-center gap-8">
+    <!-- Hero Welcome Header -->
+    <div class="text-center max-w-2xl mx-auto flex flex-col items-center gap-3">
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+        Interactive Chess Opening &amp; Gambit Trainer
+      </span>
+      <h2 class="text-2xl sm:text-4xl font-bold tracking-tight text-white">
+        How would you like to train today?
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+        Choose a mode below to launch a distraction-free board workspace. Your selected repertoire line is ready to go.
+      </p>
+    </div>
+
+    <!-- Primary 3 Mode Cards on Home Page -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5" role="tablist">
+      <!-- Mode Card 1: Drill Practice -->
+      <div class="bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 flex flex-col justify-between gap-5 shadow-xl transition-all group">
+        <div class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl">
+            🎯
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">Guided Drill Practice</h3>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">Popular</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Master book openings and sharp gambits move-by-move with visual hint arrows, coach feedback, and auto-responding opponent moves.
+            </p>
+          </div>
+        </div>
+        <button id="modeDrillBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/15">
+          🎯 Drill Practice
+        </button>
+      </div>
+
+      <!-- Mode Card 2: Record Sequence -->
+      <div class="bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 flex flex-col justify-between gap-5 shadow-xl transition-all group">
+        <div class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-2xl">
+            ⏺️
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Record Custom Sequence</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Play moves for both White and Black on the board, attach tactical coaching notes, and save to your Library or OS File Manager (`.pgn` / `.json`).
+            </p>
+          </div>
+        </div>
+        <button id="modeRecordBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-100 border border-slate-700">
+          ⏺️ Record Sequence
+        </button>
+      </div>
+
+      <!-- Mode Card 3: Free Play / AI -->
+      <div class="bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-sky-500/50 rounded-2xl p-6 flex flex-col justify-between gap-5 shadow-xl transition-all group">
+        <div class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-2xl">
+            ⚔️
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Free Play / AI Sparring</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Test your understanding of any opening position by playing it out against the built-in tactical chess engine at Casual, Club, or Master strength.
+            </p>
+          </div>
+        </div>
+        <button id="modeSparBtn" type="button" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-100 border border-slate-700">
+          ⚔️ Free Play / AI
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Sequence Summary & Quick Picker Bar on Home Page -->
+    <div class="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+      <div class="flex items-center gap-3.5 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-lg shrink-0">
+          📖
+        </div>
+        <div class="min-w-0">
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active Opening Sequence</div>
+          <div id="homeActiveSeqTitle" class="text-sm font-bold text-white truncate">Italian Gambit (Main Tactical Line)</div>
+          <div id="homeActiveSeqMeta" class="text-xs text-slate-400 truncate">C50 • Sharp Center Sacrifice • 15 plies</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+        <button id="homeBrowseOpeningsBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-slate-700 transition">
+          📚 Browse All Openings
+        </button>
+        <button id="homeQuickStartBtn" type="button" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow transition">
+          ▶ Start Practice Now
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <input id="hiddenFileInput" type="file" accept=".pgn,.json,.txt" class="hidden" />
+
+  <!-- Sequence File Manager Modal (Routes to local library + OS File Manager Export/Import) -->
+  <div id="fileManagerModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📁</span>
+            <span>Sequence File Manager &amp; Format Hub</span>
+          </h2>
+          <p class="text-xs text-slate-400">Manage saved opening sequences, export to your OS File Manager (`.pgn` or `.chessrep.json`), or import external files.</p>
+        </div>
+        <button id="closeFileManagerBtn" type="button" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 overflow-y-auto custom-scroll flex flex-col gap-4">
+        <!-- Format Selector & OS File Manager Actions -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <label for="exportFormatSelect" class="text-xs font-semibold text-slate-300">Preferred Saving Format:</label>
+            <select id="exportFormatSelect" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-medium outline-none">
+              <option value="pgn">Standard Annotated PGN (.pgn) — Recommended</option>
+              <option value="json">Rich Repertoire Bundle (.chessrep.json)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="modalImportFileBtn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition">
+              📂 Open File from Disk
+            </button>
+            <button id="modalExportAllBtn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition">
+              📦 Export Full Repertoire Pack
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Sequences Table -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <th class="py-2.5 px-3 font-semibold">Sequence Title</th>
+                <th class="py-2.5 px-3 font-semibold">Side</th>
+                <th class="py-2.5 px-3 font-semibold">Moves (PGN Preview)</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fileManagerTableBody" class="divide-y divide-slate-800/70 bg-slate-900/50">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Raw PGN / FEN Paste & Inspect Drawer -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">Direct PGN / Move Sequence Inspector &amp; Importer</span>
+            <button id="loadPgnTextBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold">
+              Import PGN Text into Board
+            </button>
+          </div>
+          <textarea id="pgnInspectorTextarea" rows="3" placeholder="Paste any PGN move sequence here (e.g. 1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d4 exd4)..." class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-xs text-slate-200 outline-none focus:border-amber-500/60"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="fixed bottom-4 right-4 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-300 bg-slate-900 border border-amber-500/50 text-slate-100 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2">
+    <span id="toastIcon">✨</span>
+    <span id="toastText">Sequence saved!</span>
+  </div>
+
+  <script src="js/engine.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/repertoire.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>
