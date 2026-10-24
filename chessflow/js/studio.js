@@ -160,6 +160,13 @@ function bindStudioEvents() {
     drawChessBoard();
   });
 
+  document.getElementById('togglePositionEvaluationBtn').addEventListener('click', () => {
+    state.showPositionEvaluation = !state.showPositionEvaluation;
+    renderHeaderAndEval();
+    resizeAndDrawBoard();
+    savePageSession();
+  });
+
   document.getElementById('toggleGuideArrowBtn').addEventListener('click', e => {
     state.showGuideArrow = !state.showGuideArrow;
     e.currentTarget.textContent = state.showGuideArrow ? 'ON' : 'OFF';

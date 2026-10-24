@@ -2,7 +2,7 @@ const PAGE_SESSION_KEY = 'chessflow_workspace_v1';
 const HOME_PAGE = 'index.html';
 const SESSION_FIELDS = [
   'mode', 'sidebarTab', 'activeSeqId', 'boardFlipped', 'boardTheme',
-  'showGuideArrow', 'autoPlayOpponent', 'aiDepth', 'moveHistory',
+  'showGuideArrow', 'showPositionEvaluation', 'autoPlayOpponent', 'aiDepth', 'moveHistory',
   'currentPly', 'customNotes'
 ];
 let pageDraft = {};

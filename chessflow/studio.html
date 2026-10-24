@@ -63,15 +63,15 @@
       <!-- Active Sequence Header Bar -->
       <div class="opening-header w-full max-w-[540px] bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-xl">
         <div class="flex items-center gap-2.5 min-w-0 max-w-full">
-          <span id="activeSideBadge" class="px-2 py-1 rounded-lg text-xs font-bold bg-white text-slate-950 shadow-sm shrink-0">White</span>
+          <span id="activeSideBadge" class="sequence-side-badge" data-side="w" title="Practice as White" aria-label="Practice as White">W</span>
           <div class="min-w-0">
             <h2 id="activeOpeningTitle" class="font-bold text-sm text-white truncate">Italian Gambit (Main Line)</h2>
             <p id="activeOpeningEco" class="text-[11px] text-slate-400 truncate">ECO C50 • Tactical Center Sacrifice</p>
           </div>
         </div>
         <div class="opening-header-actions">
-          <button id="quickSwitchOpeningBtn" type="button" class="opening-branch-button rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Change line" aria-label="Change line">
-            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6v13L18 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="7" cy="6" r="3.5"/><circle cx="18" cy="6" r="3.5"/><circle cx="7" cy="19" r="3.5"/></g></svg>
+          <button id="quickSwitchOpeningBtn" type="button" class="opening-branch-button" title="Change line" aria-label="Change line">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6v13L18 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="7" cy="6" r="3.5"/><circle cx="18" cy="6" r="3.5"/><circle cx="7" cy="19" r="3.5"/></g></svg>
           </button>
           <span id="turnStatusPill" role="status" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
             White to move
@@ -80,9 +80,9 @@
       </div>
 
       <!-- Evaluation + Canvas Board Wrapper -->
-      <div class="w-full flex items-stretch gap-2.5 justify-center">
+      <div id="boardLayout" class="w-full max-w-[540px] flex items-stretch gap-2.5 justify-center">
         <!-- Vertical Evaluation Bar -->
-        <div class="w-3.5 sm:w-4 bg-slate-800 rounded-full overflow-hidden flex flex-col border border-slate-700 shrink-0 shadow-inner" title="Position Evaluation">
+        <div id="positionEvaluation" class="w-3.5 sm:w-4 bg-slate-800 rounded-full overflow-hidden flex flex-col border border-slate-700 shrink-0 shadow-inner" title="Position Evaluation">
           <div id="evalBarBlack" class="bg-slate-900 transition-all duration-300" style="height: 50%;"></div>
           <div id="evalBarWhite" class="bg-amber-100 transition-all duration-300 flex-1"></div>
         </div>
@@ -311,6 +311,12 @@
                 <option value="midnight">Midnight Slate</option>
                 <option value="ocean">Deep Ocean</option>
               </select>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span id="positionEvaluationLabel" class="text-slate-300">Position evaluation</span>
+              <button id="togglePositionEvaluationBtn" type="button" role="switch" aria-checked="true" aria-labelledby="positionEvaluationLabel" aria-controls="positionEvaluation" class="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                ON
+              </button>
             </div>
             <div class="flex items-center justify-between text-xs">
               <span class="text-slate-300">Show Book Arrow Hint</span>

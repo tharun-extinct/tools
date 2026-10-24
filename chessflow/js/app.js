@@ -15,6 +15,7 @@ const state = {
   boardFlipped: false,
   boardTheme: 'classic',
   showGuideArrow: true,
+  showPositionEvaluation: true,
   autoPlayOpponent: true,
   aiDepth: 2,
 
@@ -746,13 +747,12 @@ function renderHeaderAndEval() {
     document.getElementById('activeOpeningTitle').textContent = seq.title;
     document.getElementById('activeOpeningEco').textContent = `${seq.eco} • ${seq.moves.length} book plies`;
     const badge = document.getElementById('activeSideBadge');
-    if (seq.side === 'w') {
-      badge.textContent = 'White';
-      badge.className = 'px-2 py-1 rounded-lg text-xs font-bold bg-white text-slate-950 shadow-sm shrink-0';
-    } else {
-      badge.textContent = 'Black';
-      badge.className = 'px-2 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-100 border border-slate-600 shadow-sm shrink-0';
-    }
+    const sideName = seq.side === 'w' ? 'White' : 'Black';
+    badge.textContent = seq.side === 'w' ? 'W' : 'B';
+    badge.className = 'sequence-side-badge';
+    badge.dataset.side = seq.side;
+    badge.title = `Practice as ${sideName}`;
+    badge.setAttribute('aria-label', `Practice as ${sideName}`);
   }
 
   const pill = document.getElementById('turnStatusPill');
@@ -772,6 +772,12 @@ function renderHeaderAndEval() {
     pill.textContent = `${state.engine.turn === 'w' ? 'White' : 'Black'} to move`;
     pill.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30';
   }
+
+  const evaluationToggle = document.getElementById('togglePositionEvaluationBtn');
+  evaluationToggle.textContent = state.showPositionEvaluation ? 'ON' : 'OFF';
+  evaluationToggle.setAttribute('aria-checked', String(state.showPositionEvaluation));
+  document.getElementById('positionEvaluation').style.display = state.showPositionEvaluation ? '' : 'none';
+  document.getElementById('boardLayout').classList.toggle('evaluation-hidden', !state.showPositionEvaluation);
 
   // Update evaluation bar
   const score = state.engine.evaluateMaterial();

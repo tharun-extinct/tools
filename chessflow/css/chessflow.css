@@ -124,6 +124,25 @@ body[data-page="studio"] select:focus-visible {
   justify-content: flex-end;
   gap: 8px;
 }
+.sequence-side-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #fff;
+  color: #020617;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sequence-side-badge[data-side="b"] {
+  background: #1e293b;
+  border-color: #64748b;
+  color: #f8fafc;
+}
 .opening-branch-button {
   display: inline-flex;
   align-items: center;
@@ -131,9 +150,27 @@ body[data-page="studio"] select:focus-visible {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #5eead4;
+  cursor: pointer;
+  opacity: .75;
+  transition: color 150ms ease, opacity 150ms ease;
+}
+.opening-branch-button:hover,
+.opening-branch-button:focus-visible {
+  color: #99f6e4;
+  opacity: 1;
 }
 #turnStatusPill { white-space: nowrap; }
 @media (max-width: 479px) {
   .opening-header { grid-template-columns: minmax(0, 1fr); }
   .opening-header-actions { justify-self: end; }
 }
+
+/* Let the board use the full row when evaluation is hidden. */
+#boardLayout.evaluation-hidden #boardContainer {
+  max-width: 100%;
+}
+#boardContainer { min-width: 0; }
