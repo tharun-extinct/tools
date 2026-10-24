@@ -110,3 +110,30 @@ body[data-page="studio"] select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   #studioNavbar { transition: none; }
 }
+
+/* Keep opening actions together at the right edge of the summary card. */
+.opening-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.opening-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.opening-branch-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+#turnStatusPill { white-space: nowrap; }
+@media (max-width: 479px) {
+  .opening-header { grid-template-columns: minmax(0, 1fr); }
+  .opening-header-actions { justify-self: end; }
+}

@@ -121,7 +121,8 @@ function bindStudioEvents() {
   });
 
   document.getElementById('restartLineBtn').addEventListener('click', () => {
-    selectSequence(state.activeSeqId);
+    selectSequence(state.activeSeqId, { startAtBeginning: true });
+    maybeTriggerAiSparMove();
     showToast('Sequence reset to move 1');
   });
 

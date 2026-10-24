@@ -99,7 +99,7 @@ function clearOpponentTimer() {
   }
 }
 
-function selectSequence(seqId) {
+function selectSequence(seqId, { startAtBeginning = false } = {}) {
   clearOpponentTimer();
   state.activeSeqId = seqId;
   pageDraft = {};
@@ -113,14 +113,16 @@ function selectSequence(seqId) {
   state.selectedSquare = null;
   state.legalMovesFromSelected = [];
   state.customNotes = Object.assign({}, seq.notes || {});
+  state.pendingPromotion = null;
+  document.getElementById('promotionOverlay')?.classList.add('hidden');
 
   const titleInput = document.getElementById('saveSequenceTitleInput');
   const sideInput = document.getElementById('saveSequenceSideSelect');
   if (titleInput) titleInput.value = seq.title;
   if (sideInput) sideInput.value = seq.side || 'w';
 
-  if (state.mode === 'record') {
-    // In Record Mode, load the full sequence so the user can inspect or append to it
+  if (state.mode === 'record' && !startAtBeginning) {
+    // Opening a recording loads its moves; Restart explicitly starts a fresh run.
     loadFullSequenceIntoHistory(seq);
   } else {
     setCoachMessage(
