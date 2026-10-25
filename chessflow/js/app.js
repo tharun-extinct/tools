@@ -643,8 +643,8 @@ function renderRepertoireList() {
       const active = item.id === state.activeSeqId;
       const sideBadge =
         item.side === 'w'
-          ? '<span class="px-1.5 py-0.5 rounded bg-white text-slate-950 font-bold text-[10px]">W</span>'
-          : '<span class="px-1.5 py-0.5 rounded bg-black text-white border border-slate-600 font-bold text-[10px]">B</span>';
+          ? '<span class="repertoire-side-badge bg-white text-slate-950 border-transparent">W</span>'
+          : '<span class="repertoire-side-badge bg-black text-white border-slate-600">B</span>';
       return `
         <button type="button" data-seq-id="${escapeHtml(item.id)}" class="seq-select-btn w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
           active

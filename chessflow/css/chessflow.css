@@ -143,6 +143,21 @@ body[data-page="studio"] select:focus-visible {
   border-color: #64748b;
   color: #f8fafc;
 }
+.repertoire-side-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 20px;
+  flex-shrink: 0;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
 .opening-branch-button {
   display: inline-flex;
   align-items: center;
