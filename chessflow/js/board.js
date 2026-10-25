@@ -132,6 +132,7 @@ function drawChessBoard() {
     for (let sc = 0; sc < 8; sc++) {
       const { r, c } = screenToBoard(sr, sc);
       if (anim && anim.to.r === r && anim.to.c === c) continue;
+      if (state.boardDrag && state.boardDrag.from.r === r && state.boardDrag.from.c === c) continue;
       const p = state.engine.board[r][c];
       if (!p) continue;
       drawPieceOnSquare(ctx, p, sc * sq, sr * sq, sq);
@@ -147,8 +148,14 @@ function drawChessBoard() {
     drawPieceOnSquare(ctx, anim.piece, curX, curY, sq);
   }
 
+  // Keep the grabbed piece centered under the mouse, pen, or finger.
+  if (state.boardDrag) {
+    drawPieceOnSquare(ctx, state.boardDrag.piece,
+      state.boardDrag.x * width - sq / 2, state.boardDrag.y * width - sq / 2, sq);
+  }
+
   // Draw Guide / Book Move Arrow when in Drill Mode (or when Hint triggered)
-  if (state.mode === 'drill' && state.showGuideArrow) {
+  if (state.mode === 'drill' && state.showGuideArrow && !state.boardDrag) {
     const seq = getActiveSequence();
     if (seq && state.currentPly < seq.moves.length) {
       const expectedSan = seq.moves[state.currentPly];

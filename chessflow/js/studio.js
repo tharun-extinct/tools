@@ -29,28 +29,84 @@ function bindStudioEvents() {
     const rect = canvas.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    const sc = Math.max(0, Math.min(7, Math.floor((x / rect.width) * 8)));
-    const sr = Math.max(0, Math.min(7, Math.floor((y / rect.height) * 8)));
+    if (x < 0 || y < 0 || x >= rect.width || y >= rect.height) return null;
+    const sc = Math.floor((x / rect.width) * 8);
+    const sr = Math.floor((y / rect.height) * 8);
     return screenToBoard(sr, sc);
   }
 
-  canvas.addEventListener('mousedown', e => {
-    const { r, c } = getCoordsFromClientEvent(e.clientX, e.clientY);
-    handleSquareInteraction(r, c);
+  let boardPointer = null;
+  function cancelBoardDrag() {
+    const pointer = boardPointer;
+    boardPointer = null;
+    state.boardDrag = null;
+    canvas.style.cursor = '';
+    if (pointer && canvas.hasPointerCapture(pointer.id)) canvas.releasePointerCapture(pointer.id);
+    drawChessBoard();
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || !e.isPrimary || boardPointer || state.pendingPromotion || state.activeAnimation) return;
+    const from = getCoordsFromClientEvent(e.clientX, e.clientY);
+    if (!from) return;
+    e.preventDefault();
+    const piece = state.engine.board[from.r][from.c];
+    boardPointer = {
+      id: e.pointerId, from, startX: e.clientX, startY: e.clientY,
+      piece: piece && piece.color === state.engine.turn ? piece : null,
+      fen: state.engine.toFen(), flipped: state.boardFlipped, dragging: false
+    };
+    canvas.setPointerCapture(e.pointerId);
   });
 
-  canvas.addEventListener(
-    'touchstart',
-    e => {
-      if (e.touches && e.touches.length > 0) {
-        e.preventDefault();
-        const t = e.touches[0];
-        const { r, c } = getCoordsFromClientEvent(t.clientX, t.clientY);
-        handleSquareInteraction(r, c);
-      }
-    },
-    { passive: false }
-  );
+  canvas.addEventListener('pointermove', e => {
+    const pointer = boardPointer;
+    if (!pointer || pointer.id !== e.pointerId) return;
+    if (pointer.fen !== state.engine.toFen() || pointer.flipped !== state.boardFlipped) {
+      cancelBoardDrag();
+      return;
+    }
+    if (!pointer.piece) return;
+    if (!pointer.dragging && Math.hypot(e.clientX - pointer.startX, e.clientY - pointer.startY) < 5) return;
+    if (!pointer.dragging) {
+      pointer.dragging = true;
+      state.selectedSquare = pointer.from;
+      state.legalMovesFromSelected = state.engine.getLegalMoves().filter(
+        m => m.from.r === pointer.from.r && m.from.c === pointer.from.c
+      );
+      canvas.style.cursor = 'grabbing';
+    }
+    const rect = canvas.getBoundingClientRect();
+    state.boardDrag = {
+      from: pointer.from, piece: pointer.piece,
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height
+    };
+    drawChessBoard();
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    const pointer = boardPointer;
+    if (!pointer || pointer.id !== e.pointerId) return;
+    const to = getCoordsFromClientEvent(e.clientX, e.clientY);
+    const unchanged = pointer.fen === state.engine.toFen() && pointer.flipped === state.boardFlipped;
+    cancelBoardDrag();
+    if (!to || !unchanged) return;
+    if (pointer.dragging) {
+      attemptBoardMove(pointer.from.r, pointer.from.c, to.r, to.c);
+      drawChessBoard();
+    } else {
+      handleSquareInteraction(to.r, to.c);
+    }
+  });
+  canvas.addEventListener('pointercancel', cancelBoardDrag);
+  canvas.addEventListener('lostpointercapture', () => {
+    if (boardPointer) cancelBoardDrag();
+  });
+  window.addEventListener('blur', cancelBoardDrag);
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && boardPointer) cancelBoardDrag();
+  });
 
   // Promotion picker buttons
   document.querySelectorAll('.promo-choice-btn').forEach(btn => {

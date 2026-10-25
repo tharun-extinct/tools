@@ -27,6 +27,7 @@ const state = {
 
   // Interaction state
   selectedSquare: null,
+  boardDrag: null,
   legalMovesFromSelected: [],
   pendingPromotion: null,
   cursorSquare: { r: 6, c: 4 },
