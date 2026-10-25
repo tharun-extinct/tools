@@ -179,7 +179,7 @@ body[data-page="studio"] select:focus-visible {
 .board-controls {
   width: 100%;
   max-width: 540px;
-  padding: 12px;
+  padding: 8px 12px;
   border: 1px solid #1e293b;
   border-radius: 18px;
   background: #0f172a;
@@ -229,7 +229,7 @@ body[data-page="studio"] select:focus-visible {
 .board-play { background: #f59e0b; color: #020617; }
 .board-play:hover { background: #fbbf24; color: #020617; }
 @media (max-width: 399px) {
-  .board-controls { padding: 10px; }
+  .board-controls { padding: 6px 10px; }
   .board-controls-top { gap: 6px; }
   .board-utilities { gap: 0; }
   .board-utility { flex-direction: column; gap: 2px; padding: 4px 6px; font-size: 10px; }
