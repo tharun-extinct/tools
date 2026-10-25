@@ -81,7 +81,7 @@ function bindStudioEvents() {
   document.getElementById('stepForwardBtn').addEventListener('click', () => jumpToPly(state.currentPly + 1));
   document.getElementById('stepEndBtn').addEventListener('click', () => jumpToPly(state.moveHistory.length));
 
-  document.getElementById('hintMoveBtn').addEventListener('click', () => {
+  document.getElementById('hintMoveBtn')?.addEventListener('click', () => {
     state.showGuideArrow = true;
     document.getElementById('toggleGuideArrowBtn').textContent = 'ON';
     const seq = getActiveSequence();
@@ -98,7 +98,7 @@ function bindStudioEvents() {
     drawChessBoard();
   });
 
-  document.getElementById('playBookMoveBtn').addEventListener('click', () => {
+  document.getElementById('playBookMoveBtn')?.addEventListener('click', () => {
     const seq = getActiveSequence();
     if (seq && state.currentPly < seq.moves.length) {
       const expectedSan = seq.moves[state.currentPly];
