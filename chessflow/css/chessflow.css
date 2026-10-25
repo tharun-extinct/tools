@@ -139,7 +139,7 @@ body[data-page="studio"] select:focus-visible {
   font-weight: 700;
 }
 .sequence-side-badge[data-side="b"] {
-  background: #1e293b;
+  background: #000;
   border-color: #64748b;
   color: #f8fafc;
 }
