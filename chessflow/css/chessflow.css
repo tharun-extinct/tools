@@ -158,6 +158,10 @@ body[data-page="studio"] select:focus-visible {
   font-weight: 700;
   line-height: 1;
 }
+.repertoire-side-badge.bg-black {
+  width: 22.4px;
+  height: 20.4px;
+}
 .opening-branch-button {
   display: inline-flex;
   align-items: center;
