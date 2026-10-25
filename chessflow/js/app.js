@@ -745,7 +745,7 @@ function renderHeaderAndEval() {
   const seq = getActiveSequence();
   if (seq) {
     document.getElementById('activeOpeningTitle').textContent = seq.title;
-    document.getElementById('activeOpeningEco').textContent = `${seq.eco} • ${seq.moves.length} book plies`;
+    document.getElementById('activeOpeningEco').textContent = seq.eco;
     const badge = document.getElementById('activeSideBadge');
     const sideName = seq.side === 'w' ? 'White' : 'Black';
     badge.textContent = seq.side === 'w' ? 'W' : 'B';
