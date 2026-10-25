@@ -174,3 +174,64 @@ body[data-page="studio"] select:focus-visible {
   max-width: 100%;
 }
 #boardContainer { min-width: 0; }
+
+/* Separate browsing a sequence from playing a move. */
+.board-controls {
+  width: 100%;
+  max-width: 540px;
+  padding: 12px;
+  border: 1px solid #1e293b;
+  border-radius: 18px;
+  background: #0f172a;
+}
+.board-controls-top, .board-move-navigation, .board-utilities {
+  display: flex;
+  align-items: center;
+}
+.board-controls-top { justify-content: space-between; gap: 12px; }
+.board-move-navigation {
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #020617;
+}
+.board-utilities { gap: 4px; }
+.board-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 40px;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.board-control svg { width: 18px; height: 18px; flex-shrink: 0; }
+.board-control:hover { background: #1e293b; color: #fff; }
+.board-utility { padding-inline: 10px; color: #94a3b8; }
+.board-practice-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #1e293b;
+}
+.board-hint { border-color: #475569; color: #fcd34d; }
+.board-hint:hover { background: #29271d; color: #fde68a; }
+.board-play { background: #f59e0b; color: #020617; }
+.board-play:hover { background: #fbbf24; color: #020617; }
+@media (max-width: 399px) {
+  .board-controls { padding: 10px; }
+  .board-controls-top { gap: 6px; }
+  .board-utilities { gap: 0; }
+  .board-utility { flex-direction: column; gap: 2px; padding: 4px 6px; font-size: 10px; }
+  .board-move-navigation .board-control { min-width: 34px; padding: 6px; }
+}
